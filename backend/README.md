@@ -1,4 +1,4 @@
-# RUTEA · Backend, etapa 3
+# RUTEA · Backend, etapa 4
 
 Python 3.11 o superior. Ejecutar comandos desde la raíz del repositorio.
 Se conserva `backend/` existente: dominio puro en `app/domain`, casos de uso
@@ -122,4 +122,63 @@ definitivas. No comparar este contador como si midiera operaciones equivalentes.
 Las pruebas contrastan ambos motores con un oráculo Floyd-Warshall en grafos
 pequeños con direcciones, desconexiones y diferentes horarios.
 
-Siguiente etapa: múltiples entregas con Held-Karp y backtracking.
+## Múltiples entregas y algoritmos puros
+
+Los motores residen en `app/domain/algorithm/`, sin FastAPI ni Pydantic:
+`dijkstra.py`, `bellman_ford.py`, `ufds.py`, `trafico.py`, `tsp_dp.py`
+(Held-Karp), `backtracking.py` (fuerza bruta con poda), `tsp.py` (contrato
+de matriz/resultado) y `divide_conquer.py` (zonificación).
+Los casos de uso en `app/application/services/` construyen la matriz, invocan
+los motores y expanden la secuencia de visitas a calles reales.
+
+`POST /api/rutas/multi-entrega`:
+
+```json
+{
+  "origen": "ID_DEPOSITO",
+  "destinos": ["ID_CLIENTE_1", "ID_CLIENTE_2"],
+  "minuto_dia": 480,
+  "algoritmo": "held_karp",
+  "volver_origen": true
+}
+```
+
+Held-Karp admite 1–12 clientes (O(N² 2^N)); `backtracking` admite 1–8
+(O(N!) con poda por costo acumulado). Estas cotas son límites operativos
+explícitos para evitar trabajo exponencial ilimitado. No repetir IDs ni
+incluir el depósito entre clientes. `volver_origen` vale true por defecto;
+false produce un recorrido abierto cuya última parada también se optimiza.
+
+La matriz asimétrica se calcula con Dijkstra entre cada par de puntos,
+manteniendo infinito en pares inaccesibles. Que un par sea inaccesible no
+impide necesariamente una secuencia abierta válida. Se devuelve 404 solo
+si no existe un recorrido completo con las condiciones solicitadas.
+La preparación realiza como máximo (N+1)N búsquedas punto a punto y guarda
+sus arcos exactos; no usa distancias en línea recta ni simetriza calles.
+El tráfico se mantiene fijo en la hora seleccionada para todos los tramos.
+
+La salida incluye `orden_visita` (paradas planificadas), `nodos` (recorrido
+vial completo), geometría, distancia y costo. Un camino mínimo puede pasar
+por otro cliente antes de su visita planificada o repetir calles; se permite
+y no se imponen ventanas horarias ni restricciones de capacidad.
+`estados_evaluados` cuenta estados DP almacenados o llamadas de búsqueda,
+según el motor: no son medidas de trabajo idénticas.
+`nodos_evaluados_matriz` suma las extracciones definitivas de las búsquedas
+Dijkstra que sí encontraron camino; no incluye búsquedas fallidas.
+
+`POST /api/rutas/multi-entrega/comparar` usa el mismo cuerpo, con máximo
+8 clientes, y ejecuta ambos motores sobre una única matriz compartida.
+El campo `algoritmo` no selecciona un motor en la comparación: siempre son ambos.
+Devuelve ambas soluciones y equivalencia de costos; `tiempo_matriz_ms` separa
+la preparación de `tiempo_algoritmo_ms` (solo secuenciación TSP).
+En cada resultado, `tiempo_ms` suma la preparación compartida y resolución
+de ese motor; `tiempo_total_ms` mide la comparación completa.
+Pueden existir órdenes diferentes con el mismo costo óptimo.
+
+`GET /api/grafo/sectores` devuelve los nodos de SO, SE, NO y NE. Divide por
+el centro de la caja geográfica: primero latitud y después longitud; puntos
+sobre los cortes se asignan al norte/este. Es O(V), no balancea cantidades
+ni garantiza conectividad de cada sector. No elimina calles, restringe rutas
+ni asigna automáticamente vehículos. La interfaz podrá visualizar estos grupos.
+
+Siguiente etapa: Kruskal para la red troncal de distribución.

@@ -51,16 +51,7 @@ class CalcularRuta:
         inicio_algoritmo = perf_counter()
         resultado = algoritmos[algoritmo](self.adyacencia, origen, destino, minuto)
         tiempo_algoritmo_ms = (perf_counter() - inicio_algoritmo) * 1000
-        coordenadas = []
-        for arista in resultado.aristas:
-            a, b = self.grafo.nodos[arista.origen], self.grafo.nodos[arista.destino]
-            segmento = list(arista.geometria or ((a.lon, a.lat), (b.lon, b.lat)))
-            if coordenadas and coordenadas[-1] == segmento[0]:
-                segmento = segmento[1:]
-            coordenadas.extend(segmento)
-        nodo = self.grafo.nodos[origen]
-        geometria = ({"type": "LineString", "coordinates": coordenadas} if coordenadas else
-                     {"type": "Point", "coordinates": (nodo.lon, nodo.lat)})
+        geometria = self.geometria(origen, resultado.aristas)
         return {"algoritmo": algoritmo, "origen": origen, "destino": destino,
                 "minuto_dia": minuto, "nodos": [origen, *[a.destino for a in resultado.aristas]],
                 "tiempo_ms": (perf_counter() - inicio) * 1000,
@@ -69,3 +60,15 @@ class CalcularRuta:
                 "costo_ponderado_m": resultado.costo,
                 "nodos_evaluados": resultado.nodos_evaluados,
                 "trafico": "simulado", "geometria": geometria}
+
+    def geometria(self, origen, aristas) -> dict:
+        coordenadas = []
+        for arista in aristas:
+            a, b = self.grafo.nodos[arista.origen], self.grafo.nodos[arista.destino]
+            segmento = list(arista.geometria or ((a.lon, a.lat), (b.lon, b.lat)))
+            if coordenadas and coordenadas[-1] == segmento[0]:
+                segmento = segmento[1:]
+            coordenadas.extend(segmento)
+        nodo = self.grafo.nodos[origen]
+        return ({"type": "LineString", "coordinates": coordenadas} if coordenadas else
+                {"type": "Point", "coordinates": (nodo.lon, nodo.lat)})

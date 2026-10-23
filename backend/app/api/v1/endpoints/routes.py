@@ -7,8 +7,35 @@ from backend.app.application.dtos.ruta import (
 )
 from backend.app.application.services.calcular_ruta import CalcularRuta
 from backend.app.domain.algorithm.dijkstra import SinRutaError
+from backend.app.application.dtos.multientrega import (
+    SolicitudMultiEntrega, RespuestaMultiEntrega, RespuestaComparacionMulti,
+)
+from backend.app.application.services.calcular_multientrega import CalcularMultiEntrega
 
 router = APIRouter(prefix="/api", tags=["Rutas"])
+
+
+@router.post("/rutas/multi-entrega", response_model=RespuestaMultiEntrega)
+def multi_entrega(payload: SolicitudMultiEntrega, service: CalcularRuta = Depends(calcular_ruta)):
+    try:
+        return CalcularMultiEntrega(service).ejecutar(
+            payload.origen, payload.destinos, payload.minuto_dia,
+            payload.algoritmo, payload.volver_origen)
+    except SinRutaError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.post("/rutas/multi-entrega/comparar", response_model=RespuestaComparacionMulti)
+def comparar_multi(payload: SolicitudMultiEntrega, service: CalcularRuta = Depends(calcular_ruta)):
+    try:
+        return CalcularMultiEntrega(service).comparar(
+            payload.origen, payload.destinos, payload.minuto_dia, payload.volver_origen)
+    except SinRutaError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @router.post("/rutas/punto-a-punto", response_model=RespuestaRuta)

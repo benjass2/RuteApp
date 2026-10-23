@@ -89,6 +89,40 @@ class RouteTests(unittest.TestCase):
         for minuto in (-1, 1440, True, 5.5):
             self.assertEqual(self.route(minuto=minuto).status_code, 422)
 
+    def test_multi_delivery_open_route_and_comparison(self):
+        payload = {"origen": "a", "destinos": ["d", "b"], "minuto_dia": 0,
+                   "volver_origen": False}
+        for algoritmo in ("held_karp", "backtracking"):
+            response = self.client.post("/api/rutas/multi-entrega", json={**payload, "algoritmo": algoritmo})
+            self.assertEqual(response.status_code, 200, response.text)
+            data = response.json()
+            self.assertEqual(data["orden_visita"], ["a", "b", "d"])
+            self.assertEqual(data["nodos"], ["a", "b", "d"])
+            self.assertEqual(data["costo_ponderado_m"], 100)
+            self.assertAlmostEqual(data["distancia_km"], .1)
+        response = self.client.post("/api/rutas/multi-entrega/comparar", json=payload)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertTrue(response.json()["costos_equivalentes"])
+        self.assertEqual(self.client.post("/api/rutas/multi-entrega", json={
+            **payload, "volver_origen": True}).status_code, 404)
+
+    def test_multi_delivery_validation(self):
+        for destinos in ([], ["b", "b"], ["a"], ["missing"], ["aislado"], ["b"] * 13):
+            response = self.client.post("/api/rutas/multi-entrega", json={
+                "origen": "a", "destinos": destinos})
+            self.assertIn(response.status_code, (422, 404))
+        payload = {"origen": "a", "destinos": [str(i) for i in range(9)], "algoritmo": "backtracking"}
+        self.assertEqual(self.client.post("/api/rutas/multi-entrega", json=payload).status_code, 422)
+        payload["algoritmo"] = "held_karp"
+        self.assertEqual(self.client.post("/api/rutas/multi-entrega/comparar", json=payload).status_code, 422)
+
+    def test_sector_endpoint(self):
+        response = self.client.get("/api/grafo/sectores")
+        self.assertEqual(response.status_code, 200)
+        grupos = response.json()["sectores"]
+        self.assertEqual(len(grupos), 4)
+        self.assertEqual(sum(s["total"] for s in grupos), 5)
+
     def test_missing_dataset(self):
         with TestClient(create_app(Path(self.directory.name) / "missing.json")) as client:
             self.assertFalse(client.get("/api/health").json()["dataset_disponible"])
