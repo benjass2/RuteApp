@@ -1,6 +1,8 @@
 """Índices precalculados una vez por proceso y orquestación de rutas."""
 from time import perf_counter
 from math import isclose
+from collections.abc import Iterable
+from backend.app.domain.model.graph import Arista
 
 from backend.app.domain.algorithm.dijkstra import SinRutaError, dijkstra
 from backend.app.domain.algorithm.bellman_ford import bellman_ford
@@ -61,7 +63,7 @@ class CalcularRuta:
                 "nodos_evaluados": resultado.nodos_evaluados,
                 "trafico": "simulado", "geometria": geometria}
 
-    def geometria(self, origen, aristas) -> dict:
+    def geometria(self, origen: str, aristas: Iterable[Arista]) -> dict:
         coordenadas = []
         for arista in aristas:
             a, b = self.grafo.nodos[arista.origen], self.grafo.nodos[arista.destino]

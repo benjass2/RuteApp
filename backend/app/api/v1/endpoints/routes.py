@@ -9,8 +9,10 @@ from backend.app.application.services.calcular_ruta import CalcularRuta
 from backend.app.domain.algorithm.dijkstra import SinRutaError
 from backend.app.application.dtos.multientrega import (
     SolicitudMultiEntrega, RespuestaMultiEntrega, RespuestaComparacionMulti,
+    SolicitudComparacionMulti,
 )
 from backend.app.application.services.calcular_multientrega import CalcularMultiEntrega
+from backend.app.application.dtos.grafo import RespuestaConectividad
 
 router = APIRouter(prefix="/api", tags=["Rutas"])
 
@@ -28,7 +30,7 @@ def multi_entrega(payload: SolicitudMultiEntrega, service: CalcularRuta = Depend
 
 
 @router.post("/rutas/multi-entrega/comparar", response_model=RespuestaComparacionMulti)
-def comparar_multi(payload: SolicitudMultiEntrega, service: CalcularRuta = Depends(calcular_ruta)):
+def comparar_multi(payload: SolicitudComparacionMulti, service: CalcularRuta = Depends(calcular_ruta)):
     try:
         return CalcularMultiEntrega(service).comparar(
             payload.origen, payload.destinos, payload.minuto_dia, payload.volver_origen)
@@ -58,7 +60,7 @@ def comparar(payload: SolicitudComparacion, service: CalcularRuta = Depends(calc
         raise HTTPException(422, str(exc)) from exc
 
 
-@router.post("/grafo/conectividad")
+@router.post("/grafo/conectividad", response_model=RespuestaConectividad)
 def conectividad(payload: SolicitudConectividad, service: CalcularRuta = Depends(calcular_ruta)):
     try:
         return service.conectividad(payload.origen, payload.destinos)

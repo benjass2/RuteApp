@@ -1,21 +1,10 @@
 """Caminos mínimos con heapq sobre arcos dirigidos y pesos positivos."""
-from dataclasses import dataclass
 from heapq import heappop, heappush
 from math import inf
 
 from backend.app.domain.algorithm.trafico import factor_trafico
 from backend.app.domain.model.graph import Arista
-
-
-class SinRutaError(ValueError):
-    pass
-
-
-@dataclass(frozen=True)
-class ResultadoCamino:
-    aristas: tuple[Arista, ...]
-    costo: float
-    nodos_evaluados: int
+from backend.app.domain.model.camino import ResultadoCamino, SinRutaError
 
 
 def dijkstra(adyacencia: dict[str, list[Arista]], origen: str, destino: str,
