@@ -4,8 +4,8 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
-/cache/
-/dataset/*.tmp
+/backend/cache/
+/backend/dataset/*.tmp
 
 logs
 *.log
