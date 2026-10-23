@@ -6,6 +6,7 @@ from backend.app.application.services.calcular_ruta import CalcularRuta
 from backend.app.domain.algorithm.backtracking import backtracking
 from backend.app.domain.algorithm.dijkstra import SinRutaError, dijkstra
 from backend.app.domain.algorithm.tsp_dp import held_karp
+from backend.app.domain.algorithm.trafico import factor_trafico
 
 
 class CalcularMultiEntrega:
@@ -13,6 +14,7 @@ class CalcularMultiEntrega:
         self.rutas = rutas
 
     def preparar(self, origen: str, destinos: list[str], minuto: int):
+        factor_trafico("", minuto)
         self.rutas.validar_nodos([origen, *destinos])
         if not destinos or len(destinos) > 12 or len(set([origen, *destinos])) != len(destinos) + 1:
             raise ValueError("Se requieren de 1 a 12 destinos únicos distintos al origen")
@@ -58,6 +60,8 @@ class CalcularMultiEntrega:
     def ejecutar(self, origen: str, destinos: list[str], minuto: int,
                  algoritmo: str = "held_karp", volver: bool = True) -> dict:
         inicio = perf_counter()
+        if algoritmo not in ("held_karp", "backtracking"):
+            raise ValueError("Algoritmo no soportado")
         if algoritmo == "backtracking" and len(destinos) > 8:
             raise ValueError("Backtracking admite como máximo 8 paradas")
         preparado = self.preparar(origen, destinos, minuto)

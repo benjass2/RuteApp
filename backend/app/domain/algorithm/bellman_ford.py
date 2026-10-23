@@ -5,7 +5,7 @@ La hora permanece fija durante todo el recorrido, igual que en Dijkstra.
 """
 from math import inf
 
-from backend.app.domain.algorithm.dijkstra import ResultadoCamino, SinRutaError
+from backend.app.domain.model.camino import ResultadoCamino, SinRutaError
 from backend.app.domain.algorithm.trafico import factor_trafico
 from backend.app.domain.model.graph import Arista
 

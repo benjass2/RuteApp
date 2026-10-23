@@ -1,6 +1,7 @@
 from typing import Literal
 
 from pydantic import BaseModel
+from backend.app.application.dtos.geojson import ColeccionCalles
 
 
 class RespuestaMST(BaseModel):
@@ -17,4 +18,4 @@ class RespuestaMST(BaseModel):
     tiempo_ms: float
     tiempo_algoritmo_ms: float
     atribucion: str
-    geojson: dict
+    geojson: ColeccionCalles

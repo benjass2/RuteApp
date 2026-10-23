@@ -1,21 +1,29 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
+from backend.app.application.dtos.base import NodoId, SolicitudBase
+from backend.app.application.dtos.geojson import Geometria
 
 
-class SolicitudMultiEntrega(BaseModel):
-    origen: str = Field(min_length=1, max_length=100)
-    destinos: list[str] = Field(min_length=1, max_length=12)
+class SolicitudComparacionMulti(SolicitudBase):
+    origen: NodoId
+    destinos: list[NodoId] = Field(min_length=1, max_length=8)
     minuto_dia: int = Field(default=480, ge=0, le=1439, strict=True)
-    algoritmo: Literal["held_karp", "backtracking"] = "held_karp"
     volver_origen: bool = Field(default=True, strict=True)
 
     @model_validator(mode="after")
     def validar_paradas(self):
         if len(set(self.destinos)) != len(self.destinos) or self.origen in self.destinos:
             raise ValueError("Las paradas deben ser únicas y distintas del origen")
-        if any(not id or len(id) > 100 for id in self.destinos):
-            raise ValueError("ID de parada inválido")
+        return self
+
+
+class SolicitudMultiEntrega(SolicitudComparacionMulti):
+    destinos: list[NodoId] = Field(min_length=1, max_length=12)
+    algoritmo: Literal["held_karp", "backtracking"] = "held_karp"
+
+    @model_validator(mode="after")
+    def validar_limite_motor(self):
         if self.algoritmo == "backtracking" and len(self.destinos) > 8:
             raise ValueError("Backtracking admite como máximo 8 paradas")
         return self
@@ -35,7 +43,7 @@ class RespuestaMultiEntrega(BaseModel):
     estados_evaluados: int
     nodos_evaluados_matriz: int
     trafico: str = "simulado"
-    geometria: dict
+    geometria: Geometria
 
 
 class RespuestaComparacionMulti(BaseModel):

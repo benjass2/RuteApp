@@ -8,6 +8,10 @@ from pathlib import Path
 def descargar(output: Path, min_nodos: int, min_aristas: int) -> None:
     import osmnx as ox
 
+    # Ubicación estable aunque el script se ejecute desde otra carpeta.
+    ox.settings.use_cache = True
+    ox.settings.cache_folder = str(Path(__file__).resolve().parents[1] / "cache")
+
     lugares = ["Miraflores, Lima, Peru", "San Isidro, Lima, Peru"]
     # MultiDiGraph: conserva calles de un sentido y aristas paralelas.
     grafo = ox.graph_from_place(lugares, network_type="drive", simplify=True, retain_all=True)

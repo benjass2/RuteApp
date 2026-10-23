@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from math import isfinite, inf
 
-from backend.app.domain.algorithm.dijkstra import SinRutaError
+from backend.app.domain.model.camino import SinRutaError
 
 
 @dataclass(frozen=True)

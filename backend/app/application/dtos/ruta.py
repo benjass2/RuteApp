@@ -1,11 +1,13 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from backend.app.application.dtos.base import NodoId, SolicitudBase
+from backend.app.application.dtos.geojson import Geometria
 
 
-class SolicitudComparacion(BaseModel):
-    origen: str = Field(min_length=1, max_length=100)
-    destino: str = Field(min_length=1, max_length=100)
+class SolicitudComparacion(SolicitudBase):
+    origen: NodoId
+    destino: NodoId
     minuto_dia: int = Field(default=480, ge=0, le=1439, strict=True)
 
 
@@ -13,9 +15,9 @@ class SolicitudRuta(SolicitudComparacion):
     algoritmo: Literal["dijkstra", "bellman_ford"] = "dijkstra"
 
 
-class SolicitudConectividad(BaseModel):
-    origen: str = Field(min_length=1, max_length=100)
-    destinos: list[str] = Field(min_length=1, max_length=100)
+class SolicitudConectividad(SolicitudBase):
+    origen: NodoId
+    destinos: list[NodoId] = Field(min_length=1, max_length=100)
 
 
 class RespuestaRuta(BaseModel):
@@ -30,7 +32,7 @@ class RespuestaRuta(BaseModel):
     costo_ponderado_m: float
     nodos_evaluados: int
     trafico: str = "simulado"
-    geometria: dict
+    geometria: Geometria
 
 
 class RespuestaComparacion(BaseModel):

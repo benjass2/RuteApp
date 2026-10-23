@@ -8,14 +8,14 @@ en `app/application`, adaptadores en `app/infrastructure` y HTTP en `app/api`.
 
 ```powershell
 py -m venv .venv
-.\.venv\Scripts\python -m pip install -r backend/requirements-dev.txt -r dataset/requirements.txt
-.\.venv\Scripts\python dataset/script_descarga.py
+.\.venv\Scripts\python -m pip install -r backend/requirements-dev.txt -r backend/dataset/requirements.txt
+.\.venv\Scripts\python backend/dataset/script_descarga.py
 .\.venv\Scripts\python -m uvicorn backend.main:app --reload
 ```
 
 La descarga consulta OpenStreetMap mediante OSMnx para Miraflores y San Isidro.
 Requiere conexión y puede tardar varios minutos. El JSON real se genera en
-`dataset/dataset_grafo.json`; no se incluye un grafo sintético como sustituto.
+`backend/dataset/dataset_grafo.json`; no se incluye un grafo sintético como sustituto.
 El script exige al menos 1500 nodos y 3400 aristas antes de guardar; si la
 cobertura actual no alcanza esos valores, informa el error sin sobrescribir datos.
 
@@ -37,6 +37,26 @@ Sin dataset válido, los endpoints del grafo responden 503; health sigue operati
 Tras descargar o reemplazar el archivo, reiniciar el proceso.
 `RUTEA_DATASET_PATH` permite configurar otra ruta local.
 OSMnx solo se usa para preprocesar; el runtime no hace consultas externas.
+
+Los datos y la caché pertenecen al backend:
+
+```text
+backend/
+├── app/
+├── dataset/
+│   ├── dataset_grafo.json
+│   ├── script_descarga.py
+│   └── requirements.txt
+├── cache/                  # Respuestas OSMnx, ignoradas por Git
+├── tests/
+└── main.py
+```
+
+La caché se usa solo durante la descarga, su ruta no depende de la carpeta
+desde la que se ejecuta el script y no se necesita en producción. El JSON
+procesado sí debe incluirse en el despliegue. Esta distribución reemplaza
+la ubicación `dataset/` en la raíz del diseño inicial, manteniendo la
+subcarpeta física de datos dentro de `backend/`.
 
 ## Verificación
 
@@ -168,7 +188,7 @@ Dijkstra que sí encontraron camino; no incluye búsquedas fallidas.
 
 `POST /api/rutas/multi-entrega/comparar` usa el mismo cuerpo, con máximo
 8 clientes, y ejecuta ambos motores sobre una única matriz compartida.
-El campo `algoritmo` no selecciona un motor en la comparación: siempre son ambos.
+La comparación no recibe `algoritmo`: siempre ejecuta ambos motores.
 Devuelve ambas soluciones y equivalencia de costos; `tiempo_matriz_ms` separa
 la preparación de `tiempo_algoritmo_ms` (solo secuenciación TSP).
 En cada resultado, `tiempo_ms` suma la preparación compartida y resolución
@@ -213,3 +233,29 @@ y ambos excluyen serialización/transporte HTTP. Sin dataset responde 503.
 Esta red es una visualización de infraestructura de longitud mínima; no
 garantiza recorridos vehiculares que respeten direcciones y no sustituye
 la ruta de Dijkstra, Bellman-Ford ni la planificación TSP.
+
+## Organización y validación de contratos
+
+Los modelos Pydantic de solicitudes y respuestas están en
+`app/application/dtos/`. No existe una segunda carpeta `api/schemas`: evitar
+duplicar contratos entre capas. `api/` contiene los controladores HTTP y
+dependencias; paginación y zonificación se orquestan desde los servicios de
+aplicación. `domain/model/camino.py` comparte el resultado y la excepción de
+caminos mínimos sin que Bellman-Ford dependa de la implementación de Dijkstra.
+
+Las solicitudes rechazan campos desconocidos (422), requieren IDs de tipo
+string, recortan espacios exteriores y rechazan IDs vacíos. Los límites se
+validan después de normalizar los IDs, incluidas las paradas duplicadas.
+La comparación multi-entrega tiene su propio contrato con máximo 8 clientes,
+sin campo `algoritmo`. Los límites y los tipos GeoJSON se documentan en `/docs`.
+
+Los modelos privados de `infrastructure/persistence` validan el formato del
+archivo antes de convertirlo a entidades puras. Rechazan estructuras inválidas,
+coordenadas no finitas o fuera de rango, longitudes no positivas, booleanos
+en campos numéricos y geometrías con un solo punto. Si aparece un ID dentro
+de un nodo, debe coincidir con su clave. El modelo de archivo admite metadatos
+OSM adicionales; una geometría ausente o vacía usa los extremos de la calle.
+Un archivo inválido queda registrado en el log y mantiene los endpoints del
+grafo en 503. Los servicios se publican únicamente si la carga y la creación
+de índices terminaron correctamente; health conserva su respuesta 200 con
+`dataset_disponible: false` cuando el dataset no está listo.

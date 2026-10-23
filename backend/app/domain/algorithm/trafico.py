@@ -3,7 +3,7 @@ from unicodedata import normalize
 
 
 def factor_trafico(calle: str, minuto: int) -> float:
-    if not 0 <= minuto <= 1439:
+    if type(minuto) is not int or not 0 <= minuto <= 1439:
         raise ValueError("El minuto del día debe estar entre 0 y 1439")
     hora = minuto / 60
     # Picos triangulares continuos; valle=1, pico=2 en calles locales.
