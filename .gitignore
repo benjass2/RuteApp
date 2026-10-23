@@ -1,4 +1,12 @@
 # Logs
+# Python y caché del preprocesamiento OSM
+__pycache__/
+*.py[cod]
+.venv/
+.env
+/cache/
+/dataset/*.tmp
+
 logs
 *.log
 npm-debug.log*
