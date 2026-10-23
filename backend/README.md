@@ -1,4 +1,4 @@
-# RUTEA · Backend, etapa 4
+# RUTEA · Backend, etapa 5
 
 Python 3.11 o superior. Ejecutar comandos desde la raíz del repositorio.
 Se conserva `backend/` existente: dominio puro en `app/domain`, casos de uso
@@ -181,4 +181,35 @@ sobre los cortes se asignan al norte/este. Es O(V), no balancea cantidades
 ni garantiza conectividad de cada sector. No elimina calles, restringe rutas
 ni asigna automáticamente vehículos. La interfaz podrá visualizar estos grupos.
 
-Siguiente etapa: Kruskal para la red troncal de distribución.
+## Kruskal: red troncal
+
+`GET /api/grafo/mst` genera un bosque de expansión mínima usando
+`app/domain/algorithm/mst_kruskal.py` y el UFDS del dominio. El peso es
+`longitud_m` física, independiente de la hora y del modelo de tráfico.
+
+Kruskal aplica a una proyección **no dirigida** del grafo: considera cada
+arco como candidato sin orientación. No altera la adyacencia de las rutas.
+Al ordenar por longitud y evitar ciclos, descarta bucles, arcos inversos y
+paralelos redundantes; entre conexiones paralelas prevalece la más corta.
+El arco seleccionado conserva su geometría y propiedades originales,
+incluido `sentido_unico` como dato de origen, no como restricción del MST.
+En empates, la elección sigue el orden del dataset.
+
+Devuelve `componentes` (incluye nodos aislados), `es_conexo`, `es_arbol`,
+`nodos`, `aristas_seleccionadas`, `aristas_evaluadas`, `distancia_km`,
+`tiempo_algoritmo_ms`, `tiempo_ms`, atribución y `geojson` FeatureCollection
+para Leaflet. Se cumple aristas_seleccionadas = nodos − componentes.
+Si hay más de una componente, la respuesta sigue siendo 200 y contiene un
+bosque mínimo por componente; no inventa conexiones entre distritos.
+`geojson` contiene solo calles seleccionadas; los nodos aislados se contabilizan
+en las métricas y pueden consultarse por `/api/grafo/nodos`.
+
+La complejidad es O(V + E log E) y memoria O(V+E). `aristas_evaluadas`
+cuenta candidatos examinados después de ordenar, hasta completar el árbol
+o agotar los candidatos. El algoritmo se ejecuta por petición;
+`tiempo_algoritmo_ms` excluye el armado del GeoJSON, `tiempo_ms` lo incluye,
+y ambos excluyen serialización/transporte HTTP. Sin dataset responde 503.
+
+Esta red es una visualización de infraestructura de longitud mínima; no
+garantiza recorridos vehiculares que respeten direcciones y no sustituye
+la ruta de Dijkstra, Bellman-Ford ni la planificación TSP.

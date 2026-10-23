@@ -123,9 +123,24 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(len(grupos), 4)
         self.assertEqual(sum(s["total"] for s in grupos), 5)
 
+    def test_mst_endpoint(self):
+        response = self.client.get("/api/grafo/mst")
+        self.assertEqual(response.status_code, 200, response.text)
+        data = response.json()
+        self.assertEqual(data["componentes"], 2)  # Incluye nodo aislado.
+        self.assertFalse(data["es_arbol"])
+        self.assertEqual(data["aristas_seleccionadas"], 3)
+        self.assertAlmostEqual(data["distancia_km"], .16)
+        self.assertEqual(data["proyeccion"], "no_dirigida")
+        self.assertGreaterEqual(data["tiempo_ms"], data["tiempo_algoritmo_ms"])
+        features = data["geojson"]["features"]
+        self.assertEqual(len(features), 3)
+        self.assertEqual(features[0]["geometry"]["coordinates"][0], [-77.0, -12.1])
+
     def test_missing_dataset(self):
         with TestClient(create_app(Path(self.directory.name) / "missing.json")) as client:
             self.assertFalse(client.get("/api/health").json()["dataset_disponible"])
+            self.assertEqual(client.get("/api/grafo/mst").status_code, 503)
             self.assertEqual(client.post("/api/rutas/punto-a-punto", json={
                 "origen": "a", "destino": "d"}).status_code, 503)
 

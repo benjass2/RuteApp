@@ -5,8 +5,14 @@ from fastapi import APIRouter, Depends, Query
 from backend.app.api.dependencies.dependencies import consultar_grafo
 from backend.app.application.services.consultar_grafo import ConsultarGrafo
 from backend.app.domain.algorithm.divide_conquer import dividir_cuadrantes
+from backend.app.application.dtos.mst import RespuestaMST
 
 router = APIRouter(prefix="/api/grafo", tags=["Grafo"])
+
+
+@router.get("/mst", response_model=RespuestaMST)
+def mst(service: ConsultarGrafo = Depends(consultar_grafo)):
+    return service.mst()
 
 
 @router.get("/sectores")
