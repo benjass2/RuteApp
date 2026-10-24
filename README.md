@@ -1,6 +1,48 @@
-# ruteapp
+# RUTEA · Frontend, etapa 1
 
-This template should help get you started developing with Vue 3 in Vite.
+Aplicación académica de rutas en Miraflores y San Isidro. Vue 3 + TypeScript +
+Vite en la raíz; FastAPI y datos OpenStreetMap en `backend/`.
+
+La base utiliza PrimeVue 4, tema Aura personalizado, PrimeIcons y Pinia 3.
+Las versiones resueltas están en `package-lock.json`. La pantalla permite cambiar
+modalidad y minuto de salida. Todavía no dibuja el mapa ni consulta FastAPI.
+Pinia mantiene la selección hasta recargar la página.
+
+## Arquitectura
+
+| Carpeta | Responsabilidad |
+| --- | --- |
+| `src/domain` | Modelos puros y contratos, sin Vue, HTTP ni Leaflet. |
+| `src/application` | Casos de uso y stores Pinia. |
+| `src/infrastructure` | Adaptadores HTTP y configuración de proveedores. |
+| `src/presentation` | Componentes y vistas. |
+| `src/shared` | Utilidades y estilos comunes. |
+
+`main.ts` registra Pinia y PrimeVue. El tema está en
+`src/infrastructure/config/theme.ts`. `App.vue` monta Dashboard; los componentes
+PrimeVue se importan individualmente. Las carpetas de etapas siguientes tienen
+README con su responsabilidad. Leaflet se instalará en la etapa del mapa.
+
+## Backend y proxy local
+
+Instalación y datos: ver `backend/README.md`. Desde la raíz, en otra terminal:
+
+```powershell
+.\.venv\Scripts\python -m uvicorn backend.main:app --reload
+```
+
+El servidor Vite redirige `/api/*` a `http://127.0.0.1:8000`, preservando `/api`.
+El proxy solo funciona durante desarrollo; el enrutamiento de producción está
+pendiente de la etapa de despliegue. La pantalla base funciona sin FastAPI.
+
+## Próximos pasos
+
+1. Contratos tipados, cliente Fetch y conexión con FastAPI.
+2. Mapa Leaflet con GeoJSON local y selección de intersecciones.
+3. Rutas, entregas, capas MST/sectores y métricas.
+
+El mapa previsto no requiere teselas externas. CO₂ y experimentos reproducibles
+siguen pendientes del backend.
 
 ## Recommended IDE Setup
 
