@@ -64,7 +64,7 @@ No se necesita una base de datos, una clave de mapas ni una descarga OSM en el
 arranque. Cada instancia serverless tendrá su copia de solo lectura en memoria.
 La duración configurada es de 30 segundos; el cliente conserva su timeout de
 15 segundos. Una cancelación del navegador no garantiza interrumpir el trabajo
-Python en la instancia.
+Python en la instancia. 
 
 ## Validación pendiente en un preview
 
