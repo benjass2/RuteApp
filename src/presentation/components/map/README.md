@@ -1,1 +1,1 @@
-En la etapa del mapa, Leaflet y sus capas vivirán aquí. Los stores conservarán selecciones y datos, no instancias de Leaflet.
+MapViewer mantiene Leaflet, Canvas, capas de calles/intersecciones, marcadores y ResizeObserver. Usa únicamente datos de Pinia y acciones de selección, sin llamadas HTTP directas ni teselas externas. Libera los recursos al desmontarse.

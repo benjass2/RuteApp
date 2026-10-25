@@ -27,6 +27,31 @@
 .graph-counts div { padding: 14px 10px; border-radius: 8px; background: #f3f6ef; }
 .graph-counts dt { font-size: .65rem; color: #718078; }
 .graph-counts dd { margin: 5px 0 0; font-size: 1.5rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.route-parameters { border-top: 1px solid #edf0e9; margin-top: 22px; padding-top: 22px; }
+.route-parameters > label { display: block; font-size: .78rem; margin: 16px 0 8px; }
+.route-parameters > .p-select { width: 100%; font-size: .8rem; }
+.selection-options { display: flex; gap: 8px; }
+.selection-options .p-button { flex: 1; font-size: .75rem; }
+.stop-list { list-style: none; padding: 0; margin: 12px 0; }
+.stop-list li { display: flex; align-items: center; justify-content: space-between; font-size: .78rem; border-bottom: 1px solid #edf0e9; }
+.planner-panel { max-height: max(620px, calc(100svh - 156px)); overflow-y: auto; }
+.workspace { min-height: 620px; height: max(620px, calc(100svh - 156px)); position: sticky; top: 16px; }
+.workspace .map-title { font-size: 1.35rem; letter-spacing: -.03em; margin: 18px 0; }
+.map-viewer { position: relative; flex: 1; min-height: 430px; border-radius: 12px; border: 1px solid #d2ddcc; overflow: hidden; }
+.map-viewer .leaflet-container-root { height: 100%; width: 100%; min-height: 430px; background: #eaf0e5; }
+.map-overlay { position: absolute; inset: 0; z-index: 1100; background: #edf3e6ed; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 25px; }
+.map-overlay > i { font-size: 2rem; color: #5b795b; margin-bottom: 20px; }
+.map-overlay h2 { font-size: 1.35rem; letter-spacing: -.03em; }
+.map-overlay p { color: #64765d; line-height: 1.7; font-size: .85rem; max-width: 350px; }
+.map-tools { position: absolute; top: 12px; right: 12px; left: 55px; z-index: 800; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+.map-tools > * { pointer-events: auto; }
+.map-hint { font-size: .73rem; padding: 10px; border-radius: 7px; background: #ffffffed; color: #365743; }
+.map-legend { position: absolute; bottom: 32px; right: 10px; z-index: 800; display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; border-radius: 7px; background: #ffffffed; font-size: .65rem; color: #42604c; }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
+.depot { background: #173c30; }.delivery { background: #d58633; }.junction { background: #8ba797; }
+.map-viewer .selection-marker { border: 2px solid white; border-radius: 50%; display: grid; place-items: center; color: white; font-weight: 700; box-shadow: 0 2px 6px #163c3040; }
+.depot-marker { background: #173c30; }.delivery-marker { background: #b46b22; }
+.workspace-footer { margin-top: 16px; }
 .next-step p { font-size: .82rem; color: #718078; line-height: 1.7; margin: 12px 0 0; }
 .workspace { display: flex; flex-direction: column; padding: 26px 30px; border: 1px solid #dce3d6; border-radius: 18px; background: radial-gradient(ellipse at 65% 45%, #e3edce 0, #f1f4e8 55%, #eaf0e2 100%); }
 .workspace-heading, .workspace-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
@@ -43,3 +68,4 @@
 .app-footer { display: flex; justify-content: space-between; gap: 16px; font-size: .65rem; color: #8a958c; padding: 23px 0; }
 @media (max-width: 900px) { .app-shell { padding: 0 20px; } .header-caption { display: none; } .dashboard { grid-template-columns: 280px minmax(0, 1fr); gap: 14px; } .workspace { padding: 22px 18px; } .workspace-heading { flex-wrap: wrap; } .workspace-footer { align-items: flex-start; } }
 @media (max-width: 640px) { .app-shell { padding: 0 14px; } .app-header { height: 80px; } .dashboard { grid-template-columns: 1fr; } .planner-panel { padding: 24px; } .planner-panel h2 { margin-top: 20px; } .mode-options { grid-template-columns: 1fr 1fr; margin-bottom: 25px; } .mode-options .p-button { font-size: .75rem; padding: 12px 8px; justify-content: center; } .next-step { margin-top: 24px; } .workspace-content { padding: 45px 0; } .workspace-footer, .app-footer { flex-wrap: wrap; } }
+@media (max-width: 640px) { .planner-panel { max-height: none; } .workspace { position: relative; top: auto; height: 650px; min-height: 650px; } .map-tools { left: 48px; } .map-hint { font-size: .65rem; } }

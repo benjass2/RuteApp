@@ -4,6 +4,7 @@ import Slider from 'primevue/slider'
 import { usePlanificadorStore } from '@/application/stores/planificadorStore'
 import { formatearHora } from '@/shared/utils/formatearHora'
 import GraphStatus from './GraphStatus.vue'
+import RouteParameters from './RouteParameters.vue'
 
 const store = usePlanificadorStore()
 </script>
@@ -30,6 +31,6 @@ const store = usePlanificadorStore()
     <div class="time-range"><span>00:00</span><span>23:59</span></div>
     <p class="simulation-note"><i class="pi pi-info-circle" aria-hidden="true" /> Tráfico horario simulado con fines académicos.</p>
     <GraphStatus />
-    <div class="next-step"><span class="eyebrow">SIGUIENTE ETAPA</span><p>Seleccionar el depósito y las entregas sobre la red vial real.</p></div>
+    <RouteParameters />
   </aside>
 </template>

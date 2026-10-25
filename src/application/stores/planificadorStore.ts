@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { reactive } from 'vue'
+import { reactive, ref, shallowRef } from 'vue'
+import type { Nodo } from '@/domain/models/grafo'
 import type { ParametrosPlanificador, TipoRecorrido } from '@/domain/models/planificador'
 
 export const usePlanificadorStore = defineStore('planificador', () => {
@@ -7,9 +8,54 @@ export const usePlanificadorStore = defineStore('planificador', () => {
     tipoRecorrido: 'punto_a_punto',
     minutoDia: 480,
   })
+  const origen = shallowRef<Nodo | null>(null)
+  const destinos = shallowRef<Nodo[]>([])
+  const seleccionActiva = ref<'origen' | 'destino'>('origen')
+  const errorSeleccion = ref('')
+
+  function seleccionarNodo(nodo: Nodo) {
+    errorSeleccion.value = ''
+    if (seleccionActiva.value === 'origen') {
+      origen.value = nodo
+      destinos.value = destinos.value.filter(d => d.id !== nodo.id)
+      seleccionActiva.value = 'destino'
+      return
+    }
+    if (nodo.id === origen.value?.id) {
+      errorSeleccion.value = 'El destino debe ser distinto del depósito.'
+      return
+    }
+    if (parametros.tipoRecorrido === 'punto_a_punto') {
+      destinos.value = [nodo]
+      return
+    }
+    if (destinos.value.some(d => d.id === nodo.id)) {
+      errorSeleccion.value = 'Esa parada ya está seleccionada.'
+      return
+    }
+    if (destinos.value.length >= 12) {
+      errorSeleccion.value = 'Puedes seleccionar hasta 12 entregas.'
+      return
+    }
+    destinos.value = [...destinos.value, nodo]
+  }
+
+  function quitarDestino(id: string) {
+    destinos.value = destinos.value.filter(d => d.id !== id)
+    errorSeleccion.value = ''
+  }
+
+  function limpiar() {
+    origen.value = null
+    destinos.value = []
+    seleccionActiva.value = 'origen'
+    errorSeleccion.value = ''
+  }
 
   function cambiarTipo(tipo: TipoRecorrido) {
     parametros.tipoRecorrido = tipo
+    errorSeleccion.value = ''
+    if (tipo === 'punto_a_punto') destinos.value = destinos.value.slice(0, 1)
   }
 
   function cambiarMinuto(minuto: number) {
@@ -17,5 +63,6 @@ export const usePlanificadorStore = defineStore('planificador', () => {
     parametros.minutoDia = minuto
   }
 
-  return { parametros, cambiarTipo, cambiarMinuto }
+  return { parametros, cambiarTipo, cambiarMinuto, origen, destinos, seleccionActiva,
+    errorSeleccion, seleccionarNodo, quitarDestino, limpiar }
 })

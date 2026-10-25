@@ -1,1 +1,1 @@
-Cliente Fetch centralizado para `/api`, manejo de errores y cancelación. Pendiente de la etapa de conexión.
+HttpClient centraliza Fetch para `/api`, con timeout, cancelación, errores HTTP y validación de respuestas JSON. Inicialmente expone GET; los POST se incorporarán con los flujos de rutas.

@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import Tag from 'primevue/tag'
 import Sidebar from '@/presentation/components/sidebar/Sidebar.vue'
-import { onBeforeUnmount, onMounted } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useGrafoStore } from '@/application/stores/grafoStore'
+import { usePlanificadorStore } from '@/application/stores/planificadorStore'
+const MapViewer = defineAsyncComponent(() => import('@/presentation/components/map/MapViewer.vue'))
 
 const grafo = useGrafoStore()
+const plan = usePlanificadorStore()
+watch(() => grafo.mapa, () => plan.limpiar())
+const etiquetaConexion = computed(() => ({
+  inicial: 'Conexión pendiente', cargando: 'Verificando conexión', listo: 'Dataset disponible',
+  sin_dataset: 'Dataset no disponible', error: 'Consulta fallida',
+})[grafo.estado])
 onMounted(() => { void grafo.cargar() })
 onBeforeUnmount(() => grafo.cancelar())
 </script>
@@ -19,14 +27,9 @@ onBeforeUnmount(() => grafo.cancelar())
     <main id="main" class="dashboard">
       <Sidebar />
       <section class="workspace" aria-labelledby="workspace-title">
-        <div class="workspace-heading"><span class="eyebrow">PLANIFICADOR DE RUTAS</span><Tag :value="grafo.estado === 'listo' ? 'Dataset disponible' : 'Verificando conexión'" severity="secondary" /></div>
-        <div class="workspace-content">
-          <div class="location-icon"><i class="pi pi-map" aria-hidden="true" /></div>
-          <span class="eyebrow">MIRAFLORES + SAN ISIDRO</span>
-          <h1 id="workspace-title">Menos vueltas.<br /><span>Más posibilidades.</span></h1>
-          <p>Un espacio para explorar la red vial y encontrar mejores recorridos, una entrega a la vez.</p>
-          <div class="stage-label">Mapa interactivo en la siguiente etapa</div>
-        </div>
+        <div class="workspace-heading"><span class="eyebrow">PLANIFICADOR DE RUTAS</span><Tag :value="etiquetaConexion" severity="secondary" /></div>
+        <h1 id="workspace-title" class="map-title">Miraflores + San Isidro</h1>
+        <MapViewer />
         <footer class="workspace-footer"><span><i class="pi pi-sitemap" aria-hidden="true" /> Teoría de grafos aplicada a la ciudad</span><span>RUTEA / v1.0</span></footer>
       </section>
     </main>
