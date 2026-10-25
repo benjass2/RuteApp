@@ -46,3 +46,19 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+
+# --- Agregados para RuteApp (IDE y herramientas de IA locales) ---
+.agents/
+.codex/
+.impeccable/
+
+# Entornos y cachés de Python adicionales
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Variables de entorno adicionales por seguridad
+.env.*
+!.env.example
