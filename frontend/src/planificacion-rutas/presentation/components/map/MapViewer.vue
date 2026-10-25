@@ -16,7 +16,7 @@ const analisis = useAnalisisStore()
 const container = ref<HTMLDivElement | null>(null)
 const fondo = ref<'osm' | 'local'>('osm')
 const errorTeselas = ref(false)
-const mostrarRed = ref(false)
+const mostrarRed = ref(true)
 let base: L.TileLayer | undefined
 let falloCarga = false
 let map: L.Map | undefined
@@ -92,7 +92,7 @@ function centrar() {
 
 function ajustarNodos() {
   const zoom = map?.getZoom() ?? 14
-  const radio = zoom <= 14 ? 1.4 : zoom <= 15 ? 2.2 : 3.5
+  const radio = zoom <= 14 ? 2.5 : zoom <= 15 ? 3 : 4
   nodos?.eachLayer(layer => {
     if (layer instanceof L.CircleMarker) layer.setRadius(radio)
   })
