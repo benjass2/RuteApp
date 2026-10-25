@@ -9,6 +9,7 @@ import { usePlanificadorStore } from '@/planificacion-rutas/application/stores/p
 import MetricsPanel from '@/planificacion-rutas/presentation/components/metrics/MetricsPanel.vue'
 import { useRutasStore } from '@/planificacion-rutas/application/stores/rutasStore'
 import { useAnalisisStore } from '@/planificacion-rutas/application/stores/analisisStore'
+import { zonas } from '@/planificacion-rutas/domain/models/zona'
 const MapViewer = defineAsyncComponent(() => import('@/planificacion-rutas/presentation/components/map/MapViewer.vue'))
 
 const grafo = useGrafoStore()
@@ -16,6 +17,8 @@ const plan = usePlanificadorStore()
 const rutas = useRutasStore()
 const analisis = useAnalisisStore()
 watch(() => grafo.mapa, () => plan.limpiar())
+watch(() => grafo.zona, () => { rutas.limpiar(); analisis.limpiar(); plan.limpiar() }, { flush: 'sync' })
+const nombreZona = computed(() => zonas.find(zona => zona.id === grafo.zona)!.nombre)
 const etiquetaConexion = computed(() => ({
   inicial: 'Conexión pendiente', cargando: 'Verificando conexión', listo: 'Dataset disponible',
   sin_dataset: 'Dataset no disponible', error: 'Consulta fallida',
@@ -27,17 +30,17 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
 <template>
   <div class="app-shell">
     <header class="app-header">
-      <a class="brand" href="#main" aria-label="Rutea, ir al planificador"><span class="brand-symbol"><i class="pi pi-directions" aria-hidden="true" /></span>rutea<span class="brand-dot">.</span></a>
-      <span class="header-caption">LOGÍSTICA URBANA, MEJOR CONECTADA</span>
+      <a class="brand" href="#main" aria-label="Rutea, ir al planificador">RuteApp<span class="brand-dot"></span></a>
+      <span class="header-caption">CADA PEDIDO, UNA RUTA</span>
       <Tag value="Lima, Perú" severity="secondary" icon="pi pi-map-marker" />
     </header>
     <main id="main" class="dashboard">
       <Sidebar />
       <section class="workspace" aria-labelledby="workspace-title">
-        <div class="workspace-heading"><span class="eyebrow">PLANIFICADOR DE RUTAS</span><Tag :value="etiquetaConexion" severity="secondary" /></div>
-        <h1 id="workspace-title" class="map-title">Miraflores + San Isidro</h1>
+        <div class="workspace-heading"><span class="eyebrow">PLANIFICADOR DE DELIVERY</span><Tag :value="etiquetaConexion" severity="secondary" /></div>
+        <h1 id="workspace-title" class="map-title">{{ nombreZona }}</h1>
         <MapViewer />
-        <footer class="workspace-footer"><span><i class="pi pi-sitemap" aria-hidden="true" /> Teoría de grafos aplicada a la ciudad</span><span>RUTEA / v1.0</span></footer>
+        <footer class="workspace-footer"><span><i class="pi pi-sitemap" aria-hidden="true" /> Rutas para tus pedidos y entregas</span><span>RUTEA / v1.0</span></footer>
       </section>
       <MetricsPanel />
     </main>

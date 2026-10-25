@@ -1,1 +1,0 @@
-MapViewer mantiene Leaflet, Canvas, capas de calles/intersecciones, marcadores y ResizeObserver. Usa únicamente datos de Pinia y acciones de selección, sin llamadas HTTP directas ni teselas externas. Libera los recursos al desmontarse.

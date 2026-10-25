@@ -4,6 +4,7 @@ import type { Conectividad, RedMST, Sector } from '@/planificacion-rutas/domain/
 
 /** Puerto independiente de Fetch y del formato HTTP. */
 export interface RuteaRepository {
+  seleccionarZona(zona: import('../models/zona').ZonaId): void
   consultarEstado(signal?: AbortSignal): Promise<EstadoServidor>
   obtenerResumen(signal?: AbortSignal): Promise<ResumenGrafo>
   obtenerNodos(offset: number, limite: number, signal?: AbortSignal): Promise<PaginaNodos>

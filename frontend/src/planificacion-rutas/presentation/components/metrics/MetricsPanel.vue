@@ -25,9 +25,9 @@ const metricas = computed(() => [
 <template>
   <aside class="metrics-panel" aria-labelledby="metrics-title">
     <div class="metrics-heading"><span class="eyebrow">RESULTADOS</span><i class="pi pi-chart-bar" aria-hidden="true" /></div>
-    <h2 id="metrics-title">Tu ruta, en cifras.</h2>
+    <h2 id="metrics-title">Tu reparto, en cifras.</h2>
     <div role="status" aria-live="polite"><Tag :value="estadoTexto" :severity="rutas.estado === 'listo' ? 'success' : rutas.estado === 'error' ? 'danger' : 'secondary'" /></div>
-    <p class="metrics-description">{{ rutas.resultado ? `${nombres[rutas.resultado.algoritmo]} · Tráfico horario simulado` : rutas.estado === 'cargando' ? 'Buscando un recorrido que respete los sentidos de circulación.' : 'Selecciona tus puntos y calcula un recorrido para ver sus resultados.' }}</p>
+    <p class="metrics-description">{{ rutas.resultado ? `${nombres[rutas.resultado.algoritmo]} · Tráfico horario simulado` : rutas.estado === 'cargando' ? 'Buscando un recorrido que respete los sentidos de circulación.' : 'Elige el punto de recojo y las entregas para calcular tu ruta de reparto.' }}</p>
     <dl class="route-metrics">
       <div v-for="metrica in metricas" :key="metrica.nombre" class="metric-card">
         <dt><i class="pi" :class="metrica.icono" aria-hidden="true" />{{ metrica.nombre }}</dt>
@@ -38,17 +38,17 @@ const metricas = computed(() => [
     <template v-if="rutas.resultado">
       <p class="metric-explanation">Tiempo del algoritmo: {{ formato(rutas.resultado.tiempoAlgoritmoMs, 3) }} ms<span v-if="rutas.resultado.tiempoMatrizMs !== null"> · Matriz vial: {{ formato(rutas.resultado.tiempoMatrizMs, 3) }} ms</span>. El tiempo de ejecución excluye la comunicación HTTP.</p>
       <section class="visit-order" aria-labelledby="visit-order-title">
-        <h3 id="visit-order-title">Orden del recorrido</h3>
-        <ol><li v-for="(id, index) in rutas.resultado.ordenVisita" :key="`${index}-${id}`"><span>{{ index === 0 ? 'Depósito' : index === rutas.resultado.ordenVisita.length - 1 && id === plan.origen?.id ? 'Retorno' : `Parada ${index}` }}</span><strong>{{ id }}</strong></li></ol>
+        <h3 id="visit-order-title">Orden de las entregas</h3>
+        <ol><li v-for="(id, index) in rutas.resultado.ordenVisita" :key="`${index}-${id}`"><span>{{ index === 0 ? 'Punto de recojo' : index === rutas.resultado.ordenVisita.length - 1 && id === plan.origen?.id ? 'Retorno' : `Entrega ${index}` }}</span><strong>{{ id }}</strong></li></ol>
       </section>
     </template>
     <section class="trip-summary" aria-labelledby="trip-summary-title">
-      <h3 id="trip-summary-title" class="eyebrow">{{ rutas.resultado ? 'PARÁMETROS DEL RECORRIDO' : 'RECORRIDO EN PREPARACIÓN' }}</h3>
+      <h3 id="trip-summary-title" class="eyebrow">{{ rutas.resultado ? 'DETALLE DEL REPARTO' : 'PREPARA TU REPARTO' }}</h3>
       <dl>
-        <div><dt>Modalidad</dt><dd>{{ plan.parametros.tipoRecorrido === 'punto_a_punto' ? 'Punto a punto' : 'Multi-entrega' }}</dd></div>
+        <div><dt>Modalidad</dt><dd>{{ plan.parametros.tipoRecorrido === 'punto_a_punto' ? 'Un pedido' : 'Varios pedidos' }}</dd></div>
         <div><dt>Hora de salida</dt><dd>{{ formatearHora(plan.parametros.minutoDia) }}</dd></div>
-        <div><dt>Depósito</dt><dd>{{ plan.origen ? 'Seleccionado' : 'Por seleccionar' }}</dd></div>
-        <div><dt>Destinos</dt><dd>{{ plan.destinos.length }}</dd></div>
+        <div><dt>Punto de recojo</dt><dd>{{ plan.origen ? 'Seleccionado' : 'Por seleccionar' }}</dd></div>
+        <div><dt>Puntos de entrega</dt><dd>{{ plan.destinos.length }}</dd></div>
       </dl>
     </section>
   </aside>

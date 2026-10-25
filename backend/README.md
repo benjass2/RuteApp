@@ -3,6 +3,28 @@
 Documentación técnica del backend. Para la presentación y el inicio rápido del
 proyecto, consultar el [README general](../README.md).
 
+## Zonas independientes
+
+Se conserva `dataset/dataset_grafo.json` para Miraflores y San Isidro (`centro`).
+El archivo adicional `dataset/dataset_sur.json` corresponde a Chorrillos, San Juan
+de Miraflores, Villa El Salvador y Barranco (`sur`). Ambos se cargan al iniciar.
+Los endpoints de estado, grafo, análisis y rutas aceptan `?zona=sur`; omitirlo
+mantiene la zona `centro`. Una zona desconocida devuelve 422 y un dataset
+no disponible mantiene su estado de indisponibilidad sin sustituirlo por otro.
+
+Para regenerar únicamente la zona sur, sin sobrescribir el dataset original:
+
+```powershell
+.\.venv\Scripts\python -m pip install -r backend/dataset/requirements.txt
+.\.venv\Scripts\python backend/dataset/script_descarga.py --zona sur
+```
+
+Reiniciar FastAPI después de cambiar los archivos. Los grafos pueden incluir
+componentes desconectadas; no se añaden enlaces ficticios entre ellas.
+`GET /api/grafo/geojson?zona=sur&offset=0&limite=2000` permite cargar las calles
+por páginas (máximo 2000 arcos). Sin `limite`, se conserva la respuesta completa
+por compatibilidad; para despliegues con límites de respuesta usar páginas.
+
 Para el despliegue integrado, consultar `../docs/DESPLIEGUE.md`.
 La entrada de Vercel es `../api/index.py`: llama `create_app(inicializar=True)`
 para cargar el grafo una vez sin depender de eventos lifespan. El desarrollo

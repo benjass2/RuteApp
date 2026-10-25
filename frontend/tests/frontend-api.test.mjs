@@ -17,6 +17,23 @@ before(async () => {
 })
 after(async () => { globalThis.fetch = originalFetch; await server?.close() })
 
+test('la zona se transmite por petición y no modifica la ruta predeterminada', async () => {
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
+  const paths = []
+  const repo = new HttpRuteaRepository({ get: async path => {
+    paths.push(path)
+    return path.includes('/health') ? { status: 'ok', dataset_disponible: true }
+      : { type: 'FeatureCollection', features: [] }
+  } })
+  await repo.consultarEstado()
+  repo.seleccionarZona('sur')
+  await repo.consultarEstado()
+  await repo.obtenerRed()
+  repo.seleccionarZona('centro')
+  await repo.consultarEstado()
+  assert.deepEqual(paths, ['/health', '/health?zona=sur', '/grafo/geojson?offset=0&limite=2000&zona=sur', '/health'])
+})
+
 test('HTTP JSON, errores FastAPI y respuestas HTML', async () => {
   const client = new HttpClient()
   globalThis.fetch = async (url) => {
@@ -199,7 +216,7 @@ test('límites del cálculo y retorno al depósito', async () => {
     algoritmo: 'backtracking', minutoDia: 480, volverOrigen: false }
   assert.throws(() => validarSolicitudRuta(multi), /8 entregas/)
   validarSolicitudRuta({ ...multi, algoritmo: 'held_karp' })
-  assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, destino: 'a' }), /distintos/)
+  assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, destino: 'a' }), /distintas/)
   assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, minutoDia: 1440 }), /hora/)
 })
 

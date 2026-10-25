@@ -17,6 +17,7 @@ con servicios separados. Este proyecto conserva la distribución existente.
   cada proceso. No depende de que el adaptador llame a lifespan, y no vuelve
   a cargar el JSON si después se ejecuta lifespan.
 - `includeFiles`: incluye código Python y `backend/dataset/dataset_grafo.json`.
+  También incluye `backend/dataset/dataset_sur.json` para la zona sur.
 - `.vercelignore` y `excludeFiles`: excluyen caché, entorno virtual, herramientas
   de descarga y pruebas. El dataset procesado sí se incluye.
 

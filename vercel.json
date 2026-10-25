@@ -6,7 +6,7 @@
   "outputDirectory": "frontend/dist",
   "functions": {
     "api/index.py": {
-      "includeFiles": "backend/{main.py,app/**,dataset/dataset_grafo.json}",
+      "includeFiles": "backend/{main.py,app/**,dataset/dataset*.json}",
       "excludeFiles": "{frontend/**,backend/cache/**,backend/tests/**,backend/scripts/**,backend/dataset/script_descarga.py,**/__pycache__/**,.venv/**,node_modules/**}",
       "maxDuration": 30
     }
