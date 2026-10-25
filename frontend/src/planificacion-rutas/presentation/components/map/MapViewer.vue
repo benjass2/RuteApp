@@ -14,6 +14,11 @@ const plan = usePlanificadorStore()
 const rutas = useRutasStore()
 const analisis = useAnalisisStore()
 const container = ref<HTMLDivElement | null>(null)
+const fondo = ref<'osm' | 'local'>('osm')
+const errorTeselas = ref(false)
+const mostrarRed = ref(false)
+let base: L.TileLayer | undefined
+let falloCarga = false
 let map: L.Map | undefined
 let calles: L.GeoJSON | undefined
 let nodos: L.LayerGroup | undefined
@@ -23,6 +28,22 @@ let recorrido: L.GeoJSON | undefined
 let troncal: L.GeoJSON | undefined
 let rendererNodos: L.Canvas | undefined
 const puntos = new Map<string, L.CircleMarker>()
+
+function cambiarFondo() {
+  if (!map || !base) return
+  if (fondo.value === 'osm') base.addTo(map)
+  else base.remove()
+  const redVisible = fondo.value === 'local' || mostrarRed.value
+  if (calles) {
+    if (redVisible) calles.addTo(map)
+    else calles.remove()
+    calles.setStyle({ opacity: fondo.value === 'osm' ? .25 : .8 })
+  }
+  if (nodos) {
+    if (redVisible || analisis.sectoresVisibles) nodos.addTo(map)
+    else nodos.remove()
+  }
+}
 
 function pintarMST() {
   troncal?.remove()
@@ -42,6 +63,7 @@ function pintarSectores() {
     const color = colores.get(id)
     punto.setStyle({ color: color ?? '#436757', fillColor: color ?? '#fff', fillOpacity: color ? 1 : .9 })
   })
+  cambiarFondo()
 }
 
 function pintarRuta() {
@@ -118,6 +140,7 @@ function pintarRed() {
   pintarSeleccion()
   pintarMST()
   pintarSectores()
+  cambiarFondo()
 }
 
 onMounted(() => {
@@ -125,6 +148,14 @@ onMounted(() => {
   map = L.map(container.value, { preferCanvas: true, renderer: L.canvas({ tolerance: 4 }), minZoom: 11, maxZoom: 19 })
     .setView([-12.105, -77.035], 14)
   map.attributionControl.addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>')
+  base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, maxNativeZoom: 19, noWrap: true,
+    updateWhenIdle: true, keepBuffer: 1,
+  })
+  base.on('loading', () => { falloCarga = false })
+  base.on('tileerror', () => { falloCarga = true; errorTeselas.value = true })
+  base.on('load', () => { errorTeselas.value = falloCarga })
+  cambiarFondo()
   const paneMST = map.createPane('mst')
   paneMST.style.zIndex = '410'
   paneMST.style.pointerEvents = 'none'
@@ -143,17 +174,19 @@ onMounted(() => {
   pintarRuta()
 })
 watch(() => grafo.mapa, pintarRed)
+watch(fondo, cambiarFondo)
+watch(mostrarRed, cambiarFondo)
 watch(() => [plan.origen, plan.destinos], pintarSeleccion)
 watch(() => rutas.resultado, () => { pintarRuta(); pintarSeleccion() })
 watch(() => [analisis.mst, analisis.mstVisible], pintarMST)
 watch(() => [analisis.sectores, analisis.sectoresVisibles], pintarSectores)
-onBeforeUnmount(() => { observer?.disconnect(); map?.remove(); map = undefined })
+onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map = undefined })
 </script>
 
 <template>
   <div class="map-viewer">
     <div ref="container" class="leaflet-container-root" aria-label="Mapa de la red vial. Selecciona intersecciones con el ratón o usa los selectores del panel." />
-    <div v-if="grafo.estadoMapa !== 'listo'" class="map-overlay" role="status">
+    <div v-if="grafo.estadoMapa !== 'listo'" class="map-overlay" :class="{ 'map-overlay-compact': fondo === 'osm' }" role="status">
       <i class="pi" :class="grafo.estadoMapa === 'cargando' ? 'pi-spin pi-spinner' : 'pi-map'" aria-hidden="true" />
       <h2>{{ grafo.estadoMapa === 'cargando' ? 'Cargando red vial…' : 'La ciudad, punto a punto' }}</h2>
       <p v-if="grafo.estadoMapa === 'error'">{{ grafo.errorMapa }}</p>
@@ -162,12 +195,21 @@ onBeforeUnmount(() => { observer?.disconnect(); map?.remove(); map = undefined }
       <p v-else>Preparando las calles e intersecciones de Miraflores y San Isidro.</p>
       <Button v-if="grafo.estadoMapa === 'error'" label="Reintentar mapa" icon="pi pi-refresh" @click="grafo.cargarRed()" />
     </div>
-    <div v-if="grafo.estadoMapa === 'listo'" class="map-tools">
-      <span class="map-hint">Selecciona {{ plan.seleccionActiva === 'origen' ? 'el depósito' : 'un destino' }} en una intersección</span>
-      <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" @click="centrar" />
+    <div class="map-tools">
+      <div class="basemap-options" role="group" aria-label="Mapa base">
+        <Button label="Mapa OSM" size="small" :severity="fondo === 'osm' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'osm'" @click="fondo = 'osm'" />
+        <Button label="Solo grafo" size="small" :severity="fondo === 'local' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'local'" @click="fondo = 'local'" />
+        <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" :disabled="grafo.estadoMapa !== 'listo'" @click="centrar" />
+      </div>
+      <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Mostrar intersecciones</label>
+      <span v-if="grafo.estadoMapa === 'listo' && (fondo === 'local' || mostrarRed)" class="map-hint">Selecciona {{ plan.seleccionActiva === 'origen' ? 'el depósito' : 'un destino' }} en una intersección</span>
+    </div>
+    <div v-if="fondo === 'osm' && errorTeselas" class="basemap-error" role="status">
+      <p>No se pudieron cargar algunas imágenes de OpenStreetMap. Comprueba tu conexión o utiliza Solo grafo.</p>
+      <Button label="Reintentar imágenes" size="small" severity="secondary" @click="base?.redraw()" />
     </div>
     <div v-if="grafo.estadoMapa === 'listo'" class="map-legend" aria-label="Leyenda del mapa">
-      <span><b class="legend-dot depot" /> Depósito</span><span><b class="legend-dot delivery" /> Entregas</span><span><b class="legend-dot junction" /> Intersecciones</span>
+      <span><b class="legend-dot depot" /> Depósito</span><span><b class="legend-dot delivery" /> Entregas</span><span v-if="fondo === 'local' || mostrarRed"><b class="legend-dot junction" /> Intersecciones</span>
       <span v-if="rutas.resultado"><b class="legend-route" /> Ruta calculada</span>
       <span v-if="analisis.mstVisible && analisis.mst"><b class="legend-mst" /> MST sin dirección</span>
       <template v-if="analisis.sectoresVisibles && analisis.sectores"><span v-for="sector in analisis.sectores" :key="sector.id"><b class="legend-dot" :style="{ background: coloresSectores[sector.id] }" />{{ sector.id }}</span></template>

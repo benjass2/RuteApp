@@ -66,6 +66,7 @@ corresponde. Las carpetas de herramientas `.git`, `.agents`, `.codex`, `.idea`,
 - [Backend, instalación y API](backend/README.md)
 - [Preparación del despliegue](docs/DESPLIEGUE.md)
 
-El motor y las capas del mapa funcionan con datos locales. CO₂ y experimentos
+El motor y las capas del grafo funcionan con datos locales. El fondo de calles
+OpenStreetMap necesita Internet; «Solo grafo» permite ver la red sin teselas externas. CO₂ y experimentos
 reproducibles siguen pendientes. Vercel está configurado, pero todavía requiere
 validación de empaquetado y rewrites en una build/preview de la plataforma.

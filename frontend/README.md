@@ -69,7 +69,8 @@ las métricas pasan debajo del mapa; en móvil se apilan las tres zonas.
 El panel de resultados muestra un estado vacío hasta calcular una ruta,
 después presenta las métricas reales de FastAPI y la secuencia de visitas.
 
-La red se dibuja sobre un fondo local sin teselas ni geocodificación externas.
+La red se dibuja sobre el mapa de calles de OpenStreetMap mediante Leaflet.
+El selector «Solo grafo» permite usar un fondo local sin teselas externas.
 Las coordenadas GeoJSON usan [longitud, latitud]; los puntos Leaflet usan
 [latitud, longitud]. Canvas renderiza calles e intersecciones; su tamaño varía
 con el zoom. ResizeObserver ajusta el mapa a su contenedor y al desmontar se
@@ -149,12 +150,14 @@ Actualizar los datos del grafo limpia caché, resultados UFDS y capas; cambiar
 puntos invalida UFDS. Las respuestas obsoletas no vuelven a activar una capa.
 El orden de dibujo es calles, MST, intersecciones, ruta calculada y marcadores.
 
-Se mantiene toda la visualización local según la decisión del proyecto. No hay
-teselas remotas, geocodificación externa ni capa satelital en línea. Una futura
-vista satelital offline requeriría archivos de imágenes autorizados, georreferenciados
-y con cobertura suficiente, que no forman parte del dataset vial OSM actual.
+El fondo predeterminado utiliza `https://tile.openstreetmap.org/{z}/{x}/{y}.png`
+y necesita Internet. Muestra calles, parques y nombres; no es una vista satelital.
+Se conserva la atribución visible de OpenStreetMap y la caché normal del navegador,
+sin descargas masivas ni precarga offline de teselas. Consulta la
+[política de teselas](https://operations.osmfoundation.org/policies/tiles/).
+La selección de intersecciones, las rutas y las capas analíticas usan el dataset local.
 
-El mapa previsto no requiere teselas externas. CO₂ y experimentos reproducibles
+En «Solo grafo» el mapa no requiere teselas externas. CO₂ y experimentos reproducibles
 siguen pendientes del backend.
 
 ## Despliegue preparado

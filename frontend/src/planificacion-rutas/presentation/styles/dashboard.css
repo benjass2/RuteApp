@@ -1,4 +1,9 @@
 /* Vista de trabajo: ocupa la ventana, con scroll independiente en los paneles. */
+.basemap-options { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.map-overlay.map-overlay-compact { inset: auto 12px 64px; max-width: 350px; padding: 16px; border-radius: 12px; background: #fff; }
+.map-overlay.map-overlay-compact > i { display: none; }
+.basemap-error { position: absolute; top: 110px; right: 12px; left: 55px; z-index: 850; background: #fff; padding: 12px; border-radius: 12px; color: #654713; font-size: .8rem; }
+.basemap-error p { margin: 0 0 8px; line-height: 1.5; }
 .app-shell {
   width: 100%; max-width: none; height: 100dvh; margin: 0; padding: 0 16px;
   display: grid; grid-template-rows: 72px minmax(0, 1fr) 32px;
