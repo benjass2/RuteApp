@@ -1,3 +1,2 @@
 # Punto de descubrimiento de dependencias para la función Python de Vercel.
-# OSMnx se utiliza solo durante el preprocesamiento y no se instala aquí.
 -r backend/requirements.txt
