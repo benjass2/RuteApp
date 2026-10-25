@@ -4,9 +4,16 @@ import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useGrafoStore } from '@/application/stores/grafoStore'
 import { usePlanificadorStore } from '@/application/stores/planificadorStore'
+import { useRutasStore } from '@/application/stores/rutasStore'
+import { computed } from 'vue'
 
 const grafo = useGrafoStore()
 const plan = usePlanificadorStore()
+const rutas = useRutasStore()
+const destinosMostrados = computed(() => rutas.resultado
+  ? rutas.resultado.ordenVisita.filter(id => id !== plan.origen?.id)
+    .flatMap(id => { const nodo = plan.destinos.find(n => n.id === id); return nodo ? [nodo] : [] })
+  : plan.destinos)
 
 function seleccionar(id: string | null, tipo: 'origen' | 'destino') {
   const nodo = grafo.mapa?.nodos.find(n => n.id === id)
@@ -32,12 +39,12 @@ function seleccionar(id: string | null, tipo: 'origen' | 'destino') {
       placeholder="Seleccionar intersección" :disabled="grafo.estadoMapa !== 'listo'"
       @update:model-value="id => seleccionar(id, 'origen')" />
     <label for="destino">{{ plan.parametros.tipoRecorrido === 'multi_entrega' ? 'Agregar entrega' : 'Destino' }}</label>
-    <Select input-id="destino" aria-label="Seleccionar destino" :model-value="plan.parametros.tipoRecorrido === 'punto_a_punto' ? plan.destinos[0]?.id ?? null : null"
+    <Select :key="`${plan.parametros.tipoRecorrido}-${plan.destinos.length}`" input-id="destino" aria-label="Seleccionar destino" :model-value="plan.parametros.tipoRecorrido === 'punto_a_punto' ? plan.destinos[0]?.id ?? null : null"
       :options="grafo.mapa?.nodos ?? []" option-label="id" option-value="id" filter
       :virtual-scroller-options="{ itemSize: 38 }" placeholder="Seleccionar intersección"
       :disabled="grafo.estadoMapa !== 'listo'" @update:model-value="id => seleccionar(id, 'destino')" />
     <ol class="stop-list" aria-label="Destinos seleccionados">
-      <li v-for="(nodo, index) in plan.destinos" :key="nodo.id"><span>{{ index + 1 }}. {{ nodo.id }}</span>
+      <li v-for="(nodo, index) in destinosMostrados" :key="nodo.id"><span>{{ index + 1 }}. {{ nodo.id }}</span>
         <Button icon="pi pi-times" text rounded severity="secondary" size="small"
           :aria-label="`Quitar destino ${nodo.id}`" @click="plan.quitarDestino(nodo.id)" />
       </li>
@@ -45,6 +52,6 @@ function seleccionar(id: string | null, tipo: 'origen' | 'destino') {
     <Message v-if="plan.errorSeleccion" severity="warn" :closable="false">{{ plan.errorSeleccion }}</Message>
     <Button label="Limpiar selección" icon="pi pi-trash" text size="small" severity="secondary"
       :disabled="!plan.origen && plan.destinos.length === 0" @click="plan.limpiar()" />
-    <p class="graph-description">{{ plan.parametros.tipoRecorrido === 'multi_entrega' ? `${plan.destinos.length}/12 entregas seleccionadas. El orden se optimizará al calcular.` : 'Un depósito y un destino por recorrido.' }}</p>
+    <p class="graph-description">{{ plan.parametros.tipoRecorrido === 'multi_entrega' ? `${plan.destinos.length}/12 entregas seleccionadas. ${rutas.resultado ? 'Orden de visitas optimizado.' : 'El orden se optimizará al calcular.'}` : 'Un depósito y un destino por recorrido.' }}</p>
   </section>
 </template>

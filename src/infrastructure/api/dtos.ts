@@ -9,7 +9,7 @@ export interface ResumenDTO {
   atribucion: string
 }
 
-function objeto(value: unknown): Record<string, unknown> {
+export function objeto(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('La respuesta de la API tiene un formato inesperado.')
   }
@@ -38,11 +38,11 @@ export function leerResumen(value: unknown): ResumenDTO {
     fuente: data.fuente, atribucion: data.atribucion }
 }
 
-function numero(value: unknown, min: number, max: number): value is number {
+export function numero(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max
 }
 
-function id(value: unknown): value is string {
+export function id(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 

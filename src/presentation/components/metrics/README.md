@@ -1,1 +1,1 @@
-Componentes para métricas devueltas por FastAPI. No mostrar resultados ni mediciones simulados como datos reales.
+MetricsPanel muestra métricas reales de FastAPI, orden de visitas y parámetros actuales. Diferencia nodos (caminos mínimos) de estados (TSP), y deja los valores vacíos durante carga, errores o cambios de parámetros.

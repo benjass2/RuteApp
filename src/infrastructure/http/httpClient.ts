@@ -21,6 +21,14 @@ export class HttpClient {
   constructor(private readonly baseUrl = '/api', private readonly timeoutMs = 15_000) {}
 
   async get(path: string, signal?: AbortSignal): Promise<unknown> {
+    return this.request(path, { method: 'GET' }, signal)
+  }
+
+  async post(path: string, body: unknown, signal?: AbortSignal): Promise<unknown> {
+    return this.request(path, { method: 'POST', body: JSON.stringify(body) }, signal)
+  }
+
+  private async request(path: string, options: RequestInit, signal?: AbortSignal): Promise<unknown> {
     const controller = new AbortController()
     const cancelar = () => controller.abort()
     let timeout = false
@@ -29,7 +37,8 @@ export class HttpClient {
     const timer = setTimeout(() => { timeout = true; controller.abort() }, this.timeoutMs)
     try {
       const response = await fetch(`${this.baseUrl}${path}`, {
-        signal: controller.signal, headers: { Accept: 'application/json' },
+        ...options, signal: controller.signal,
+        headers: { Accept: 'application/json', ...(options.body ? { 'Content-Type': 'application/json' } : {}) },
       })
       const text = await response.text()
       let data: unknown

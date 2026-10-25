@@ -145,3 +145,197 @@ test('selección de depósito y límites de entregas', async () => {
   assert.equal(plan.origen, null)
   assert.equal(plan.seleccionActiva, 'origen')
 })
+
+const solicitudPunto = { tipo: 'punto_a_punto', origen: 'a', destino: 'b', minutoDia: 480, algoritmo: 'dijkstra' }
+const respuestaPunto = { algoritmo: 'dijkstra', origen: 'a', destino: 'b', minuto_dia: 480,
+  trafico: 'simulado', nodos: ['a', 'b'], distancia_km: .15, costo_ponderado_m: 300,
+  tiempo_ms: 1, tiempo_algoritmo_ms: .5, nodos_evaluados: 3,
+  geometria: { type: 'LineString', coordinates: [[-77, -12.1], [-77.01, -12.11]] } }
+
+test('POST usa el contrato exacto y preserva errores 404', async () => {
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/infrastructure/api/HttpRuteaRepository.ts')
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/rutas/punto-a-punto')
+    assert.equal(options.method, 'POST')
+    assert.equal(options.headers['Content-Type'], 'application/json')
+    assert.deepEqual(JSON.parse(options.body), { origen: 'a', destino: 'b', minuto_dia: 480, algoritmo: 'dijkstra' })
+    return Response.json(respuestaPunto)
+  }
+  const repo = new HttpRuteaRepository(new HttpClient())
+  const result = await repo.calcularRuta(solicitudPunto)
+  assert.equal(result.distanciaKm, .15)
+  assert.equal(result.unidadEvaluados, 'nodos')
+  globalThis.fetch = async () => Response.json({ detail: 'No existe ruta dirigida' }, { status: 404 })
+  await assert.rejects(repo.calcularRuta(solicitudPunto), error => error.status === 404 && /dirigida/.test(error.message))
+})
+
+test('valida respuestas de ruta y secuencias multi-entrega', async () => {
+  const { leerRuta } = await server.ssrLoadModule('/src/infrastructure/api/rutaDTO.ts')
+  for (const override of [{ distancia_km: NaN }, { nodos: ['b', 'a'] }, { algoritmo: 'otro' },
+    { geometria: { type: 'LineString', coordinates: [[-77, 91], [-77, -12]] } }]) {
+    assert.throws(() => leerRuta({ ...respuestaPunto, ...override }, solicitudPunto))
+  }
+  const solicitud = { tipo: 'multi_entrega', origen: 'a', destinos: ['b', 'c'], minutoDia: 480,
+    algoritmo: 'held_karp', volverOrigen: true }
+  const respuesta = { ...respuestaPunto, algoritmo: 'held_karp', volver_origen: true,
+    orden_visita: ['a', 'c', 'b', 'a'], nodos: ['a', 'c', 'b', 'a'],
+    tiempo_matriz_ms: .2, estados_evaluados: 5 }
+  const result = leerRuta(respuesta, solicitud)
+  assert.equal(result.unidadEvaluados, 'estados')
+  assert.deepEqual(result.ordenVisita, ['a', 'c', 'b', 'a'])
+  assert.throws(() => leerRuta({ ...respuesta, orden_visita: ['a', 'c', 'c', 'a'] }, solicitud))
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/infrastructure/api/HttpRuteaRepository.ts')
+  const repo = new HttpRuteaRepository({ post: async (path, body) => {
+    assert.equal(path, '/rutas/multi-entrega')
+    assert.deepEqual(body, { origen: 'a', destinos: ['b', 'c'], algoritmo: 'held_karp', minuto_dia: 480, volver_origen: true })
+    return respuesta
+  } })
+  assert.equal((await repo.calcularRuta(solicitud)).evaluados, 5)
+})
+
+test('límites del cálculo y retorno al depósito', async () => {
+  const { validarSolicitudRuta } = await server.ssrLoadModule('/src/application/use-cases/calcularRuta.ts')
+  const multi = { tipo: 'multi_entrega', origen: 'a', destinos: Array.from({ length: 9 }, (_, i) => String(i)),
+    algoritmo: 'backtracking', minutoDia: 480, volverOrigen: false }
+  assert.throws(() => validarSolicitudRuta(multi), /8 entregas/)
+  validarSolicitudRuta({ ...multi, algoritmo: 'held_karp' })
+  assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, destino: 'a' }), /distintos/)
+  assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, minutoDia: 1440 }), /hora/)
+})
+
+test('cambiar parámetros invalida una respuesta tardía y permite reintentar', async () => {
+  const { createApp } = await import('vue')
+  const { createPinia } = await import('pinia')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/application/ports/dependencies.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/application/stores/planificadorStore.ts')
+  const { useRutasStore } = await server.ssrLoadModule('/src/application/stores/rutasStore.ts')
+  let completar
+  let signal
+  const repository = { calcularRuta: async (_payload, inputSignal) => {
+    signal = inputSignal
+    return new Promise(resolve => { completar = resolve })
+  } }
+  const pinia = createPinia()
+  const app = createApp({}).use(pinia).provide(ruteaRepositoryKey, repository)
+  const plan = usePlanificadorStore(pinia)
+  const rutas = app.runWithContext(() => useRutasStore(pinia))
+  plan.seleccionarNodo({ id: 'a', lat: -12, lon: -77 })
+  plan.seleccionarNodo({ id: 'b', lat: -12.1, lon: -77 })
+  const primera = rutas.calcular()
+  assert.equal(rutas.estado, 'cargando')
+  plan.cambiarMinuto(600)
+  assert.equal(signal.aborted, true)
+  completar({ distanciaKm: 99 })
+  await primera
+  assert.equal(rutas.resultado, null)
+  assert.equal(rutas.estado, 'inicial')
+  repository.calcularRuta = async () => { throw new Error('Sin ruta dirigida') }
+  await rutas.calcular()
+  assert.equal(rutas.estado, 'error')
+  assert.equal(plan.destinos[0].id, 'b')
+  repository.calcularRuta = async () => ({ distanciaKm: 1 })
+  await rutas.calcular()
+  assert.equal(rutas.estado, 'listo')
+  plan.algoritmoPunto = 'bellman_ford'
+  assert.equal(rutas.resultado, null)
+  pinia._s.forEach(store => store.$dispose())
+})
+
+test('comparaciones envían los mismos parámetros sin campo algoritmo', async () => {
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/infrastructure/api/HttpRuteaRepository.ts')
+  const { leerComparacion } = await server.ssrLoadModule('/src/infrastructure/api/analisisDTO.ts')
+  const response = { resultados: [respuestaPunto, { ...respuestaPunto, algoritmo: 'bellman_ford' }], costos_equivalentes: true }
+  const repo = new HttpRuteaRepository({ post: async (path, body) => {
+    assert.equal(path, '/rutas/comparar')
+    assert.deepEqual(body, { origen: 'a', destino: 'b', minuto_dia: 480 })
+    return response
+  } })
+  assert.equal((await repo.compararRutas(solicitudPunto)).resultados[1].algoritmo, 'bellman_ford')
+  assert.throws(() => leerComparacion({ ...response, costos_equivalentes: false }, solicitudPunto))
+  assert.throws(() => leerComparacion({ ...response, resultados: [respuestaPunto] }, solicitudPunto))
+  const solicitud = { tipo: 'multi_entrega', origen: 'a', destinos: ['b'], minutoDia: 480, algoritmo: 'held_karp', volverOrigen: false }
+  const multi = { ...respuestaPunto, orden_visita: ['a', 'b'], volver_origen: false, tiempo_matriz_ms: .2, estados_evaluados: 1 }
+  const multiRepo = new HttpRuteaRepository({ post: async (path, body) => {
+    assert.equal(path, '/rutas/multi-entrega/comparar')
+    assert.equal('algoritmo' in body, false)
+    return { resultados: [{ ...multi, algoritmo: 'held_karp' }, { ...multi, algoritmo: 'backtracking' }], costos_equivalentes: true }
+  } })
+  assert.equal((await multiRepo.compararRutas(solicitud)).resultados[0].unidadEvaluados, 'estados')
+})
+
+test('contratos UFDS, MST y sectores rechazan datos inconsistentes', async () => {
+  const { leerConectividad, leerMST, leerSectores } = await server.ssrLoadModule('/src/infrastructure/api/analisisDTO.ts')
+  const ufds = { origen: 'a', tipo: 'debil', garantiza_ruta_dirigida: false, destinos: [{ id: 'b', misma_componente: true }] }
+  assert.equal(leerConectividad(ufds, 'a', ['b']).destinos[0].mismaComponente, true)
+  assert.throws(() => leerConectividad({ ...ufds, garantiza_ruta_dirigida: true }, 'a', ['b']))
+  assert.throws(() => leerConectividad(ufds, 'a', ['c']))
+  const red = { type: 'FeatureCollection', features: [] }
+  const mst = { algoritmo: 'kruskal', proyeccion: 'no_dirigida', criterio_peso: 'longitud_m', nodos: 2,
+    aristas_seleccionadas: 0, componentes: 2, distancia_km: 0, tiempo_ms: 1, es_arbol: false, es_conexo: false, geojson: red }
+  assert.equal(leerMST(mst).componentes, 2)
+  assert.throws(() => leerMST({ ...mst, aristas_seleccionadas: 1 }))
+  const sectores = { sectores: ['SO', 'SE', 'NO', 'NE'].map((id, i) => ({ id, nodos: [String(i)], total: 1 })) }
+  assert.equal(leerSectores(sectores).length, 4)
+  assert.throws(() => leerSectores({ sectores: sectores.sectores.slice(1) }))
+  assert.throws(() => leerSectores({ sectores: sectores.sectores.map(s => ({ ...s, nodos: ['repetido'] })) }))
+})
+
+test('la comparación conserva ambas rutas y se invalida al cambiar la hora', async () => {
+  const { createApp } = await import('vue')
+  const { createPinia } = await import('pinia')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/application/ports/dependencies.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/application/stores/planificadorStore.ts')
+  const { useRutasStore } = await server.ssrLoadModule('/src/application/stores/rutasStore.ts')
+  const { leerRuta } = await server.ssrLoadModule('/src/infrastructure/api/rutaDTO.ts')
+  const a = leerRuta(respuestaPunto, solicitudPunto)
+  const b = { ...a, algoritmo: 'bellman_ford' }
+  const pinia = createPinia()
+  const app = createApp({}).use(pinia).provide(ruteaRepositoryKey, { compararRutas: async () => ({ resultados: [a, b], costosEquivalentes: true }) })
+  const plan = usePlanificadorStore(pinia)
+  const rutas = app.runWithContext(() => useRutasStore(pinia))
+  plan.seleccionarNodo({ id: 'a', lat: -12, lon: -77 }); plan.seleccionarNodo({ id: 'b', lat: -12.1, lon: -77 })
+  await rutas.comparar()
+  assert.equal(rutas.resultado.algoritmo, 'dijkstra')
+  rutas.mostrarResultado('bellman_ford')
+  assert.equal(rutas.resultado.algoritmo, 'bellman_ford')
+  assert.equal(rutas.comparacion.resultados.length, 2)
+  plan.cambiarMinuto(600)
+  assert.equal(rutas.comparacion, null)
+  rutas.$dispose(); plan.$dispose()
+})
+
+test('análisis cancela capas obsoletas y conserva caché de la sesión', async () => {
+  const { createApp } = await import('vue')
+  const { createPinia } = await import('pinia')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/application/ports/dependencies.ts')
+  const { useGrafoStore } = await server.ssrLoadModule('/src/application/stores/grafoStore.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/application/stores/planificadorStore.ts')
+  const { useAnalisisStore } = await server.ssrLoadModule('/src/application/stores/analisisStore.ts')
+  let completar, signal, lecturas = 0
+  const mst = { nodos: 2, aristas: 0, componentes: 2, distanciaKm: 0, tiempoMs: 1, esArbol: false, red: { type: 'FeatureCollection', features: [] } }
+  const repository = { obtenerMST: async inputSignal => { signal = inputSignal; return new Promise(resolve => { completar = resolve }) },
+    verificarConectividad: async (origen, destinos) => ({ origen, destinos: destinos.map(id => ({ id, mismaComponente: true })) }) }
+  const pinia = createPinia()
+  const app = createApp({}).use(pinia).provide(ruteaRepositoryKey, repository)
+  const grafo = app.runWithContext(() => useGrafoStore(pinia))
+  const analisis = app.runWithContext(() => useAnalisisStore(pinia))
+  const plan = usePlanificadorStore(pinia)
+  const mapa = { nodos: [{ id: 'a', lat: -12, lon: -77 }, { id: 'b', lat: -12.1, lon: -77 }], red: mst.red }
+  grafo.mapa = mapa
+  const pending = analisis.cambiarMST(true)
+  grafo.mapa = null
+  assert.equal(signal.aborted, true)
+  completar(mst); await pending
+  assert.equal(analisis.mst, null)
+  assert.equal(analisis.mstVisible, false)
+  grafo.mapa = mapa
+  repository.obtenerMST = async () => { lecturas++; return mst }
+  await analisis.cambiarMST(true); await analisis.cambiarMST(false); await analisis.cambiarMST(true)
+  assert.equal(lecturas, 1)
+  plan.seleccionarNodo(mapa.nodos[0]); plan.seleccionarNodo(mapa.nodos[1])
+  await analisis.verificarUFDS()
+  assert.equal(analisis.conectividad.destinos[0].mismaComponente, true)
+  plan.quitarDestino('b')
+  assert.equal(analisis.conectividad, null)
+  analisis.$dispose(); grafo.$dispose(); plan.$dispose()
+})

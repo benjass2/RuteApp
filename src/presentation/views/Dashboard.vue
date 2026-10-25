@@ -4,17 +4,22 @@ import Sidebar from '@/presentation/components/sidebar/Sidebar.vue'
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useGrafoStore } from '@/application/stores/grafoStore'
 import { usePlanificadorStore } from '@/application/stores/planificadorStore'
+import MetricsPanel from '@/presentation/components/metrics/MetricsPanel.vue'
+import { useRutasStore } from '@/application/stores/rutasStore'
+import { useAnalisisStore } from '@/application/stores/analisisStore'
 const MapViewer = defineAsyncComponent(() => import('@/presentation/components/map/MapViewer.vue'))
 
 const grafo = useGrafoStore()
 const plan = usePlanificadorStore()
+const rutas = useRutasStore()
+const analisis = useAnalisisStore()
 watch(() => grafo.mapa, () => plan.limpiar())
 const etiquetaConexion = computed(() => ({
   inicial: 'Conexión pendiente', cargando: 'Verificando conexión', listo: 'Dataset disponible',
   sin_dataset: 'Dataset no disponible', error: 'Consulta fallida',
 })[grafo.estado])
 onMounted(() => { void grafo.cargar() })
-onBeforeUnmount(() => grafo.cancelar())
+onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
 </script>
 
 <template>
@@ -32,6 +37,7 @@ onBeforeUnmount(() => grafo.cancelar())
         <MapViewer />
         <footer class="workspace-footer"><span><i class="pi pi-sitemap" aria-hidden="true" /> Teoría de grafos aplicada a la ciudad</span><span>RUTEA / v1.0</span></footer>
       </section>
+      <MetricsPanel />
     </main>
     <footer class="app-footer"><span>Proyecto académico · Complejidad Algorítmica</span><span>Red vial: OpenStreetMap contributors</span></footer>
   </div>

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { reactive, ref, shallowRef } from 'vue'
 import type { Nodo } from '@/domain/models/grafo'
+import type { AlgoritmoPunto, AlgoritmoMulti } from '@/domain/models/ruta'
 import type { ParametrosPlanificador, TipoRecorrido } from '@/domain/models/planificador'
 
 export const usePlanificadorStore = defineStore('planificador', () => {
@@ -12,6 +13,9 @@ export const usePlanificadorStore = defineStore('planificador', () => {
   const destinos = shallowRef<Nodo[]>([])
   const seleccionActiva = ref<'origen' | 'destino'>('origen')
   const errorSeleccion = ref('')
+  const algoritmoPunto = ref<AlgoritmoPunto>('dijkstra')
+  const algoritmoMulti = ref<AlgoritmoMulti>('held_karp')
+  const volverOrigen = ref(true)
 
   function seleccionarNodo(nodo: Nodo) {
     errorSeleccion.value = ''
@@ -64,5 +68,5 @@ export const usePlanificadorStore = defineStore('planificador', () => {
   }
 
   return { parametros, cambiarTipo, cambiarMinuto, origen, destinos, seleccionActiva,
-    errorSeleccion, seleccionarNodo, quitarDestino, limpiar }
+    errorSeleccion, seleccionarNodo, quitarDestino, limpiar, algoritmoPunto, algoritmoMulti, volverOrigen }
 })
