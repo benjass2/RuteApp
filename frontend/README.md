@@ -1,4 +1,7 @@
-# RUTEA · Frontend, etapa 5
+# RUTEA · Frontend
+
+Documentación técnica del cliente web. Para la presentación y el inicio rápido
+del proyecto, consultar el [README general](../README.md).
 
 Aplicación académica de rutas en Miraflores y San Isidro. Vue 3 + TypeScript +
 Vite dentro de `frontend/`; FastAPI y datos OpenStreetMap en `../backend/`.
@@ -83,7 +86,8 @@ punto se reemplaza el destino; en multi-entrega se agregan hasta 12 sin duplicad
 El depósito no puede ser una entrega. Cambiar a punto a punto conserva solo la
 primera entrega. Cambiar el depósito elimina esa intersección de los destinos.
 Limpiar selección borra ambos; actualizar los datos del grafo también los limpia.
-Los números de entrega indican selección, todavía no orden optimizado.
+Antes del cálculo, los números de entrega indican el orden de selección;
+después reflejan el orden de visita calculado.
 
 El estado del mapa es independiente del resumen: si falla el GeoJSON o la
 paginación, el resumen permanece visible y se puede reintentar solo el mapa.

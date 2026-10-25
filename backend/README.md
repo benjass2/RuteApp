@@ -1,4 +1,7 @@
-# RUTEA · Backend, etapa 5
+# RUTEA · Backend
+
+Documentación técnica del backend. Para la presentación y el inicio rápido del
+proyecto, consultar el [README general](../README.md).
 
 Para el despliegue integrado, consultar `../docs/DESPLIEGUE.md`.
 La entrada de Vercel es `../api/index.py`: llama `create_app(inicializar=True)`
