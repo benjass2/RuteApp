@@ -3,6 +3,15 @@
 Documentación técnica del cliente web. Para la presentación y el inicio rápido
 del proyecto, consultar el [README general](../README.md).
 
+El selector «Zona de reparto» conserva Miraflores y San Isidro como opción
+predeterminada y añade Chorrillos, San Juan de Miraflores, Villa El Salvador y
+Barranco. El repositorio envía la zona en cada petición, sin modificar un estado
+global del servidor. Cambiarla cancela la carga anterior y limpia selección,
+resultados y análisis. El título y el encuadre del mapa se ajustan a la zona.
+La red de calles de la zona sur se descarga en páginas de 2000 arcos.
+`RUTEA_API_TARGET` permite cambiar el destino del proxy de Vite para pruebas;
+por defecto continúa usando `http://127.0.0.1:8000`.
+
 Aplicación académica de rutas en Miraflores y San Isidro. Vue 3 + TypeScript +
 Vite dentro de `frontend/`; FastAPI y datos OpenStreetMap en `../backend/`.
 

@@ -53,6 +53,10 @@ class ConsultarGrafo:
                 "tiempo_ms": (perf_counter() - inicio) * 1000,
                 "atribucion": "© OpenStreetMap contributors", "geojson": geojson}
 
+    def pagina_geojson(self, offset: int, limite: int | None) -> dict:
+        aristas = self.repository.obtener().aristas
+        return self.geojson(islice(aristas, offset, None if limite is None else offset + limite))
+
     def geojson(self, aristas: Iterable[Arista] | None = None) -> dict:
         grafo = self.repository.obtener()
         features = []

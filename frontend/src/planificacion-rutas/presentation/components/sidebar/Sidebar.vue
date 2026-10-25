@@ -7,8 +7,14 @@ import GraphStatus from './GraphStatus.vue'
 import RouteParameters from './RouteParameters.vue'
 import AlgorithmSelector from './AlgorithmSelector.vue'
 import GraphAnalysis from './GraphAnalysis.vue'
+import { useGrafoStore } from '@/planificacion-rutas/application/stores/grafoStore'
+import { zonas, type ZonaId } from '@/planificacion-rutas/domain/models/zona'
 
 const store = usePlanificadorStore()
+const grafo = useGrafoStore()
+function seleccionarZona(event: Event) {
+  void grafo.cambiarZona((event.target as HTMLSelectElement).value as ZonaId)
+}
 </script>
 
 <template>
@@ -16,6 +22,10 @@ const store = usePlanificadorStore()
     <div class="section-heading"><span class="eyebrow">TU REPARTO</span><span class="step">01</span></div>
     <h2>Organiza tus<br />entregas por Lima.</h2>
     <p class="muted">Planifica el recojo y la entrega de comida, compras o paquetes.</p>
+    <label for="zona-trabajo">Zona de reparto</label>
+    <select id="zona-trabajo" class="zone-select" :value="grafo.zona" @change="seleccionarZona">
+      <option v-for="zona in zonas" :key="zona.id" :value="zona.id">{{ zona.nombre }}</option>
+    </select>
     <div class="mode-options" role="group" aria-label="Tipo de recorrido">
       <Button label="Un pedido" icon="pi pi-map-marker"
         :outlined="store.parametros.tipoRecorrido !== 'punto_a_punto'"

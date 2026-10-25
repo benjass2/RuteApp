@@ -4,11 +4,20 @@ import type { ResumenGrafo, DatosMapa } from '@/planificacion-rutas/domain/model
 import { ruteaRepositoryKey } from '@/planificacion-rutas/application/ports/dependencies'
 import { cargarEstadoGrafo } from '@/planificacion-rutas/application/use-cases/cargarGrafo'
 import { cargarMapa } from '@/planificacion-rutas/application/use-cases/cargarMapa'
+import { zonas, type ZonaId } from '@/planificacion-rutas/domain/models/zona'
 
 export const useGrafoStore = defineStore('grafo', () => {
   const dependency = inject(ruteaRepositoryKey)
   if (!dependency) throw new Error('RuteaRepository no está configurado.')
   const repository = dependency
+  const zona = ref<ZonaId>('centro')
+  async function cambiarZona(id: ZonaId) {
+    if (id === zona.value || !zonas.some(item => item.id === id)) return
+    cancelar()
+    zona.value = id
+    repository.seleccionarZona(id)
+    await cargar()
+  }
   const estado = ref<'inicial' | 'cargando' | 'listo' | 'sin_dataset' | 'error'>('inicial')
   const resumen = shallowRef<ResumenGrafo | null>(null)
   const mensajeError = ref('')
@@ -74,5 +83,5 @@ export const useGrafoStore = defineStore('grafo', () => {
     }
   }
 
-  return { estado, resumen, mensajeError, cargar, cancelar, mapa, estadoMapa, errorMapa, cargarRed }
+  return { zona, cambiarZona, estado, resumen, mensajeError, cargar, cancelar, mapa, estadoMapa, errorMapa, cargarRed }
 })

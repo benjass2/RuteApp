@@ -550,3 +550,4 @@
         display: none;
     }
 }
+.zone-select { display: block; width: 100%; min-height: 44px; margin: 8px 0 20px; padding: 10px; border: 1px solid #738375; border-radius: 8px; background: #fff; color: #183c2e; font: inherit; }

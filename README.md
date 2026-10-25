@@ -3,6 +3,21 @@
 Plataforma académica de optimización de rutas urbanas en Miraflores y San Isidro.
 Monorepo Vue 3 + TypeScript + FastAPI, con dataset OpenStreetMap local.
 
+## Zonas de reparto
+
+El selector «Zona de reparto» permite alternar entre dos datasets independientes:
+
+| Zona | Distritos | Intersecciones | Arcos dirigidos |
+| --- | --- | ---: | ---: |
+| Centro | Miraflores y San Isidro | 2 726 | 5 387 |
+| Sur | Chorrillos, San Juan de Miraflores, Villa El Salvador y Barranco | 15 429 | 40 810 |
+
+Miraflores y San Isidro sigue siendo la opción inicial. Cambiar de zona limpia
+los puntos seleccionados, las rutas y las capas de análisis para evitar mezclar
+datos. No se calculan recorridos entre datasets. Los conteos corresponden a los
+archivos incluidos y pueden cambiar al regenerarlos. Si se añade un dataset con
+el servidor activo, reiniciar FastAPI para cargarlo.
+
 ## Funcionalidades
 
 - Selección de depósito y destinos desde las intersecciones del mapa o por ID OSM.

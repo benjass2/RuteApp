@@ -8,6 +8,7 @@ import { usePlanificadorStore } from '@/planificacion-rutas/application/stores/p
 import { useRutasStore } from '@/planificacion-rutas/application/stores/rutasStore'
 import { useAnalisisStore } from '@/planificacion-rutas/application/stores/analisisStore'
 import { coloresSectores } from '@/planificacion-rutas/presentation/constants/sectores'
+import { zonas } from '@/planificacion-rutas/domain/models/zona'
 
 const grafo = useGrafoStore()
 const plan = usePlanificadorStore()
@@ -174,6 +175,10 @@ onMounted(() => {
   pintarRuta()
 })
 watch(() => grafo.mapa, pintarRed)
+watch(() => grafo.zona, id => {
+  const zona = zonas.find(item => item.id === id)!
+  map?.setView([zona.centro[0], zona.centro[1]], 13)
+})
 watch(fondo, cambiarFondo)
 watch(mostrarRed, cambiarFondo)
 watch(() => [plan.origen, plan.destinos], pintarSeleccion)
@@ -192,7 +197,7 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
       <p v-if="grafo.estadoMapa === 'error'">{{ grafo.errorMapa }}</p>
       <p v-else-if="grafo.estado === 'error'">Conecta FastAPI y pulsa Reintentar conexión en el panel.</p>
       <p v-else-if="grafo.estado === 'sin_dataset'">El backend necesita cargar el dataset local para mostrar las calles.</p>
-      <p v-else>Preparando las calles e intersecciones de Miraflores y San Isidro.</p>
+      <p v-else>Preparando las calles e intersecciones de la zona de reparto.</p>
       <Button v-if="grafo.estadoMapa === 'error'" label="Reintentar mapa" icon="pi pi-refresh" @click="grafo.cargarRed()" />
     </div>
     <div class="map-tools">
