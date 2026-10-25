@@ -101,16 +101,16 @@ function ajustarNodos() {
 function pintarSeleccion() {
   if (!map || !seleccion) return
   seleccion.clearLayers()
-  const puntos = [ ...(plan.origen ? [{ nodo: plan.origen, label: 'D', origen: true }] : []),
+  const puntos = [ ...(plan.origen ? [{ nodo: plan.origen, label: 'R', origen: true }] : []),
     ...plan.destinos.map((nodo, index) => ({ nodo,
       label: String(rutas.resultado ? rutas.resultado.ordenVisita.indexOf(nodo.id) : index + 1), origen: false })) ]
   for (const { nodo, label, origen } of puntos) {
     L.marker([nodo.lat, nodo.lon], {
       icon: L.divIcon({ className: `selection-marker ${origen ? 'depot-marker' : 'delivery-marker'}`,
         html: `<span>${label}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] }),
-      title: `${origen ? 'Depósito' : 'Entrega ' + label}: ${nodo.id}`,
+      title: `${origen ? 'Punto de recojo' : 'Entrega ' + label}: ${nodo.id}`,
       zIndexOffset: 1000,
-    }).bindTooltip(texto(`${origen ? 'Depósito' : 'Entrega ' + label} · ${nodo.id}`)).addTo(seleccion)
+    }).bindTooltip(texto(`${origen ? 'Punto de recojo' : 'Entrega ' + label} · ${nodo.id}`)).addTo(seleccion)
   }
 }
 
@@ -202,14 +202,14 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
         <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" :disabled="grafo.estadoMapa !== 'listo'" @click="centrar" />
       </div>
       <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Mostrar intersecciones</label>
-      <span v-if="grafo.estadoMapa === 'listo' && (fondo === 'local' || mostrarRed)" class="map-hint">Selecciona {{ plan.seleccionActiva === 'origen' ? 'el depósito' : 'un destino' }} en una intersección</span>
+      <span v-if="grafo.estadoMapa === 'listo' && (fondo === 'local' || mostrarRed)" class="map-hint">Selecciona {{ plan.seleccionActiva === 'origen' ? 'el punto de recojo' : 'una entrega' }} en una intersección</span>
     </div>
     <div v-if="fondo === 'osm' && errorTeselas" class="basemap-error" role="status">
       <p>No se pudieron cargar algunas imágenes de OpenStreetMap. Comprueba tu conexión o utiliza Solo grafo.</p>
       <Button label="Reintentar imágenes" size="small" severity="secondary" @click="base?.redraw()" />
     </div>
     <div v-if="grafo.estadoMapa === 'listo'" class="map-legend" aria-label="Leyenda del mapa">
-      <span><b class="legend-dot depot" /> Depósito</span><span><b class="legend-dot delivery" /> Entregas</span><span v-if="fondo === 'local' || mostrarRed"><b class="legend-dot junction" /> Intersecciones</span>
+      <span><b class="legend-dot depot" /> Punto de recojo</span><span><b class="legend-dot delivery" /> Entregas</span><span v-if="fondo === 'local' || mostrarRed"><b class="legend-dot junction" /> Intersecciones</span>
       <span v-if="rutas.resultado"><b class="legend-route" /> Ruta calculada</span>
       <span v-if="analisis.mstVisible && analisis.mst"><b class="legend-mst" /> MST sin dirección</span>
       <template v-if="analisis.sectoresVisibles && analisis.sectores"><span v-for="sector in analisis.sectores" :key="sector.id"><b class="legend-dot" :style="{ background: coloresSectores[sector.id] }" />{{ sector.id }}</span></template>

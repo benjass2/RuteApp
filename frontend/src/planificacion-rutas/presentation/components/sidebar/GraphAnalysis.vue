@@ -36,7 +36,7 @@ const formato = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 })
       <Button label="Verificar UFDS" icon="pi pi-check-circle" outlined class="ufds-button"
         :loading="analisis.ufdsCargando" :disabled="grafo.estadoMapa !== 'listo' || !plan.origen || !plan.destinos.length || analisis.ufdsCargando"
         @click="analisis.verificarUFDS()" />
-      <p v-if="!plan.origen || !plan.destinos.length" class="analysis-note">Selecciona depósito y destinos para comprobar conectividad.</p>
+      <p v-if="!plan.origen || !plan.destinos.length" class="analysis-note">Selecciona punto de recojo y destinos para comprobar conectividad.</p>
       <div v-if="analisis.conectividad" role="status">
         <p class="analysis-note">UFDS comprueba conectividad débil; no garantiza un camino que respete los sentidos.</p>
         <ul class="connectivity-results"><li v-for="destino in analisis.conectividad.destinos" :key="destino.id">

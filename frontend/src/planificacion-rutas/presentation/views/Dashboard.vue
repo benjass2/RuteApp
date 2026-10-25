@@ -27,17 +27,17 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
 <template>
   <div class="app-shell">
     <header class="app-header">
-      <a class="brand" href="#main" aria-label="Rutea, ir al planificador"><span class="brand-symbol"><i class="pi pi-directions" aria-hidden="true" /></span>rutea<span class="brand-dot">.</span></a>
-      <span class="header-caption">LOGÍSTICA URBANA, MEJOR CONECTADA</span>
+      <a class="brand" href="#main" aria-label="Rutea, ir al planificador">RuteApp<span class="brand-dot"></span></a>
+      <span class="header-caption">CADA PEDIDO, UNA RUTA</span>
       <Tag value="Lima, Perú" severity="secondary" icon="pi pi-map-marker" />
     </header>
     <main id="main" class="dashboard">
       <Sidebar />
       <section class="workspace" aria-labelledby="workspace-title">
-        <div class="workspace-heading"><span class="eyebrow">PLANIFICADOR DE RUTAS</span><Tag :value="etiquetaConexion" severity="secondary" /></div>
+        <div class="workspace-heading"><span class="eyebrow">PLANIFICADOR DE DELIVERY</span><Tag :value="etiquetaConexion" severity="secondary" /></div>
         <h1 id="workspace-title" class="map-title">Miraflores + San Isidro</h1>
         <MapViewer />
-        <footer class="workspace-footer"><span><i class="pi pi-sitemap" aria-hidden="true" /> Teoría de grafos aplicada a la ciudad</span><span>RUTEA / v1.0</span></footer>
+        <footer class="workspace-footer"><span><i class="pi pi-sitemap" aria-hidden="true" /> Rutas para tus pedidos y entregas</span><span>RUTEA / v1.0</span></footer>
       </section>
       <MetricsPanel />
     </main>

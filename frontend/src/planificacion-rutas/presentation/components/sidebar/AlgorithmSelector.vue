@@ -37,7 +37,7 @@ const motivo = computed(() => grafo.estadoMapa !== 'listo' ? 'Espera a que la re
       </template>
     </fieldset>
     <label v-if="plan.parametros.tipoRecorrido === 'multi_entrega'" for="volver-origen" class="return-option">
-      <Checkbox v-model="plan.volverOrigen" input-id="volver-origen" binary />Volver al depósito
+      <Checkbox v-model="plan.volverOrigen" input-id="volver-origen" binary />Volver al punto de recojo
     </label>
     <p id="route-guidance" class="route-guidance">{{ motivo || 'Todo listo para calcular con el tráfico de la hora seleccionada.' }}</p>
     <Button :label="rutas.estado === 'error' ? 'Reintentar cálculo' : 'Calcular ruta óptima'" icon="pi pi-directions"

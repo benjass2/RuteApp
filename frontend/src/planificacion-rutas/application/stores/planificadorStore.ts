@@ -26,7 +26,7 @@ export const usePlanificadorStore = defineStore('planificador', () => {
       return
     }
     if (nodo.id === origen.value?.id) {
-      errorSeleccion.value = 'El destino debe ser distinto del depósito.'
+      errorSeleccion.value = 'El punto de entrega debe ser distinto del punto de recojo.'
       return
     }
     if (parametros.tipoRecorrido === 'punto_a_punto') {
@@ -34,7 +34,7 @@ export const usePlanificadorStore = defineStore('planificador', () => {
       return
     }
     if (destinos.value.some(d => d.id === nodo.id)) {
-      errorSeleccion.value = 'Esa parada ya está seleccionada.'
+      errorSeleccion.value = 'Ese punto de entrega ya está seleccionado.'
       return
     }
     if (destinos.value.length >= 12) {

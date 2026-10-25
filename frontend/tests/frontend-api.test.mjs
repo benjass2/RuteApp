@@ -199,7 +199,7 @@ test('límites del cálculo y retorno al depósito', async () => {
     algoritmo: 'backtracking', minutoDia: 480, volverOrigen: false }
   assert.throws(() => validarSolicitudRuta(multi), /8 entregas/)
   validarSolicitudRuta({ ...multi, algoritmo: 'held_karp' })
-  assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, destino: 'a' }), /distintos/)
+  assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, destino: 'a' }), /distintas/)
   assert.throws(() => validarSolicitudRuta({ ...solicitudPunto, minutoDia: 1440 }), /hora/)
 })
 

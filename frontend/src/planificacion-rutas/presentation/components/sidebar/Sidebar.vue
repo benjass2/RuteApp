@@ -13,15 +13,15 @@ const store = usePlanificadorStore()
 
 <template>
   <aside class="planner-panel" aria-label="Parámetros del planificador">
-    <div class="section-heading"><span class="eyebrow">TU RECORRIDO</span><span class="step">01</span></div>
-    <h2>Todo empieza<br />con una buena ruta.</h2>
-    <p class="muted">Elige cómo quieres organizar tu recorrido por Lima.</p>
+    <div class="section-heading"><span class="eyebrow">TU REPARTO</span><span class="step">01</span></div>
+    <h2>Organiza tus<br />entregas por Lima.</h2>
+    <p class="muted">Planifica el recojo y la entrega de comida, compras o paquetes.</p>
     <div class="mode-options" role="group" aria-label="Tipo de recorrido">
-      <Button label="Punto a punto" icon="pi pi-map-marker"
+      <Button label="Un pedido" icon="pi pi-map-marker"
         :outlined="store.parametros.tipoRecorrido !== 'punto_a_punto'"
         :aria-pressed="store.parametros.tipoRecorrido === 'punto_a_punto'"
         @click="store.cambiarTipo('punto_a_punto')" />
-      <Button label="Multi-entrega" icon="pi pi-box"
+      <Button label="Varios pedidos" icon="pi pi-box"
         :outlined="store.parametros.tipoRecorrido !== 'multi_entrega'"
         :aria-pressed="store.parametros.tipoRecorrido === 'multi_entrega'"
         @click="store.cambiarTipo('multi_entrega')" />
