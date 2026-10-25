@@ -15,9 +15,13 @@ from backend.app.application.dtos.grafo import RespuestaEstado
 DEFAULT_DATASET = Path(__file__).resolve().parent / "dataset" / "dataset_grafo.json"
 
 
-def create_app(dataset_path: Path | None = None) -> FastAPI:
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
+def create_app(dataset_path: Path | None = None, *, inicializar: bool = False) -> FastAPI:
+    inicializado = False
+
+    def cargar_servicios(app: FastAPI) -> None:
+        nonlocal inicializado
+        if inicializado:
+            return
         path = dataset_path or Path(os.environ.get("RUTEA_DATASET_PATH", str(DEFAULT_DATASET)))
         app.state.repository = None
         app.state.rutas = None
@@ -29,9 +33,16 @@ def create_app(dataset_path: Path | None = None) -> FastAPI:
             app.state.rutas = rutas
         except (OSError, ValueError, KeyError, TypeError):
             logging.getLogger(__name__).exception("No se pudo cargar el dataset: %s", path)
+        inicializado = True
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        cargar_servicios(app)
         yield
 
     app = FastAPI(title="RUTEA API", version="0.1.0", lifespan=lifespan)
+    app.state.repository = None
+    app.state.rutas = None
     app.include_router(router)
     app.include_router(routes_router)
 
@@ -39,6 +50,8 @@ def create_app(dataset_path: Path | None = None) -> FastAPI:
     def health():
         return {"status": "ok", "dataset_disponible": app.state.repository is not None}
 
+    if inicializar:
+        cargar_servicios(app)
     return app
 
 

@@ -1,0 +1,1 @@
+HttpClient centraliza Fetch GET/POST para `/api`, con JSON, timeout, cancelación, errores HTTP y validación de respuestas JSON. Los adaptadores validan el contenido específico de cada endpoint antes de mapearlo al dominio.

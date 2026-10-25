@@ -1,0 +1,1 @@
+MetricsPanel muestra métricas reales de FastAPI, orden de visitas y parámetros actuales. Diferencia nodos (caminos mínimos) de estados (TSP), y deja los valores vacíos durante carga, errores o cambios de parámetros.

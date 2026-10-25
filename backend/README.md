@@ -1,4 +1,15 @@
-# RUTEA · Backend, etapa 5
+# RUTEA · Backend
+
+Documentación técnica del backend. Para la presentación y el inicio rápido del
+proyecto, consultar el [README general](../README.md).
+
+Para el despliegue integrado, consultar `../docs/DESPLIEGUE.md`.
+La entrada de Vercel es `../api/index.py`: llama `create_app(inicializar=True)`
+para cargar el grafo una vez sin depender de eventos lifespan. El desarrollo
+local sigue usando `backend.main:app`, que inicializa los servicios en lifespan.
+El frontend es el workspace hermano `../frontend/`. Las herramientas de
+verificación del backend están en `scripts/`; ejecutar desde la raíz:
+`.\.venv\Scripts\python backend/scripts/verificar_despliegue.py` después de `npm run build`.
 
 Python 3.11 o superior. Ejecutar comandos desde la raíz del repositorio.
 Se conserva `backend/` existente: dominio puro en `app/domain`, casos de uso
