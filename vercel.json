@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "backend/{main.py,app/**,dataset/dataset_grafo.json}",
+      "excludeFiles": "{frontend/**,backend/cache/**,backend/tests/**,backend/scripts/**,backend/dataset/script_descarga.py,**/__pycache__/**,.venv/**,node_modules/**}",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path+", "destination": "/api" },
+    { "source": "/docs/:path*", "destination": "/api" },
+    { "source": "/redoc", "destination": "/api" },
+    { "source": "/openapi.json", "destination": "/api" },
+    { "source": "/((?!api(?:/|$)).*)", "destination": "/index.html" }
+  ]
+}
