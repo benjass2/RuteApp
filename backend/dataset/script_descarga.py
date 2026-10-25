@@ -1,0 +1,63 @@
+"""Extracción reproducible de OSM; requiere Internet solo durante este paso."""
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def descargar(output: Path, min_nodos: int, min_aristas: int, zona: str = "centro") -> None:
+    import osmnx as ox
+
+    # Ubicación estable aunque el script se ejecute desde otra carpeta.
+    ox.settings.use_cache = True
+    ox.settings.cache_folder = str(Path(__file__).resolve().parents[1] / "cache")
+
+    lugares = (["Miraflores, Lima, Peru", "San Isidro, Lima, Peru"] if zona == "centro" else
+               ["Chorrillos, Lima, Peru", "San Juan de Miraflores, Lima, Peru",
+                "Villa El Salvador, Lima, Peru", "Barranco, Lima, Peru"])
+    # MultiDiGraph: conserva calles de un sentido y aristas paralelas.
+    grafo = ox.graph_from_place(lugares, network_type="drive", simplify=True, retain_all=True)
+    nodos = {str(id): {"id": str(id), "lat": float(d["y"]), "lon": float(d["x"])}
+             for id, d in grafo.nodes(data=True)}
+    aristas = []
+    for u, v, key, d in grafo.edges(keys=True, data=True):
+        nombre = d.get("name", "Sin nombre")
+        if isinstance(nombre, list):
+            nombre = " / ".join(map(str, nombre))
+        geometria = d.get("geometry")
+        coords = list(geometria.coords) if geometria is not None else [
+            (grafo.nodes[u]["x"], grafo.nodes[u]["y"]),
+            (grafo.nodes[v]["x"], grafo.nodes[v]["y"])]
+        # Alinear la geometría con el origen incluso para los arcos inversos.
+        inicio = (grafo.nodes[u]["x"], grafo.nodes[u]["y"])
+        if sum((coords[-1][i] - inicio[i]) ** 2 for i in (0, 1)) < sum(
+                (coords[0][i] - inicio[i]) ** 2 for i in (0, 1)):
+            coords.reverse()
+        aristas.append({"origen": str(u), "destino": str(v), "clave": str(key),
+                        "longitud_m": float(d["length"]), "nombre": str(nombre),
+                        "sentido_unico": bool(d.get("oneway", False)), "geometria": coords})
+    if len(nodos) < min_nodos or len(aristas) < min_aristas:
+        raise ValueError(f"Área insuficiente: {len(nodos)} nodos, {len(aristas)} aristas; "
+                         "revisar cobertura antes de ajustar los mínimos.")
+    data = {"metadata": {"fuente": "OpenStreetMap", "licencia": "ODbL-1.0",
+                         "atribucion": "© OpenStreetMap contributors",
+                         "url": "https://www.openstreetmap.org/copyright",
+                         "lugares": lugares, "fecha_utc": datetime.now(timezone.utc).isoformat(),
+                         "osmnx_version": ox.__version__, "aristas_dirigidas": True},
+            "nodos": nodos, "aristas": aristas}
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporal = output.with_suffix(".tmp")
+    temporal.write_text(json.dumps(data, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+    temporal.replace(output)
+    print(f"Dataset guardado: {output} ({len(nodos)} nodos, {len(aristas)} aristas)")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--zona", choices=["centro", "sur"], default="centro")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--min-nodos", type=int, default=1500)
+    parser.add_argument("--min-aristas", type=int, default=3400)
+    args = parser.parse_args()
+    output = args.output or Path(__file__).with_name("dataset_grafo.json" if args.zona == "centro" else "dataset_sur.json")
+    descargar(output, args.min_nodos, args.min_aristas, args.zona)

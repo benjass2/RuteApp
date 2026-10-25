@@ -1,0 +1,2 @@
+# Punto de descubrimiento de dependencias para la función Python de Vercel.
+-r backend/requirements.txt

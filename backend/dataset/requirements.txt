@@ -1,0 +1,2 @@
+# Solo para preparar datos; no instalar en el servidor de producción.
+osmnx>=2.0,<3
