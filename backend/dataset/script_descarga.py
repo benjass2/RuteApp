@@ -5,16 +5,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-def descargar(output: Path, min_nodos: int, min_aristas: int, zona: str = "centro") -> None:
+def descargar(output: Path, min_nodos: int, min_aristas: int) -> None:
     import osmnx as ox
 
     # Ubicación estable aunque el script se ejecute desde otra carpeta.
     ox.settings.use_cache = True
     ox.settings.cache_folder = str(Path(__file__).resolve().parents[1] / "cache")
 
-    lugares = (["Miraflores, Lima, Peru", "San Isidro, Lima, Peru"] if zona == "centro" else
-               ["Chorrillos, Lima, Peru", "San Juan de Miraflores, Lima, Peru",
-                "Villa El Salvador, Lima, Peru", "Barranco, Lima, Peru"])
+    lugares = ["Miraflores, Lima, Peru", "San Isidro, Lima, Peru"]
     # MultiDiGraph: conserva calles de un sentido y aristas paralelas.
     grafo = ox.graph_from_place(lugares, network_type="drive", simplify=True, retain_all=True)
     nodos = {str(id): {"id": str(id), "lat": float(d["y"]), "lon": float(d["x"])}
@@ -54,10 +52,8 @@ def descargar(output: Path, min_nodos: int, min_aristas: int, zona: str = "centr
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--zona", choices=["centro", "sur"], default="centro")
-    parser.add_argument("--output", type=Path)
+    parser.add_argument("--output", type=Path, default=Path(__file__).with_name("dataset_grafo.json"))
     parser.add_argument("--min-nodos", type=int, default=1500)
     parser.add_argument("--min-aristas", type=int, default=3400)
     args = parser.parse_args()
-    output = args.output or Path(__file__).with_name("dataset_grafo.json" if args.zona == "centro" else "dataset_sur.json")
-    descargar(output, args.min_nodos, args.min_aristas, args.zona)
+    descargar(args.output, args.min_nodos, args.min_aristas)
