@@ -31,6 +31,5 @@ def nodos(offset: int = Query(0, ge=0), limite: int = Query(100, ge=1, le=2000),
 
 
 @router.get("/geojson", response_model=ColeccionCalles)
-def geojson(offset: int = Query(0, ge=0), limite: int | None = Query(None, ge=1, le=2000),
-            service: ConsultarGrafo = Depends(consultar_grafo)):
-    return service.pagina_geojson(offset, limite)
+def geojson(service: ConsultarGrafo = Depends(consultar_grafo)):
+    return service.geojson()
