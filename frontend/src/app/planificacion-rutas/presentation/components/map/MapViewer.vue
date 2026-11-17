@@ -86,11 +86,11 @@ function texto(value: string): HTMLElement {
 
 function encuadrar(bounds: L.LatLngBounds, maxZoom: number) {
   if (!map || !bounds.isValid()) return
-  const ancho = map.getSize().x
+  const { x: ancho, y: alto } = map.getSize()
   const compacto = ancho <= 840
   map.fitBounds(bounds, {
-    paddingTopLeft: compacto ? [24, 155] : [350, 115],
-    paddingBottomRight: compacto ? [28, 105] : [315, 42],
+    paddingTopLeft: compacto ? [24, Math.min(155, alto / 3)] : [350, 115],
+    paddingBottomRight: compacto ? [28, Math.min(105, alto / 4)] : [315, 42],
     maxZoom,
   })
 }
@@ -210,7 +210,7 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
         <Button label="Mapa OSM" size="small" :severity="fondo === 'osm' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'osm'" @click="fondo = 'osm'" />
         <Button label="Solo grafo" size="small" :severity="fondo === 'local' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'local'" @click="fondo = 'local'" />
         <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" :disabled="grafo.estadoMapa !== 'listo'" @click="centrar" />
-      <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Intersecciones</label>
+        <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Intersecciones</label>
       </div>
     </div>
     <div v-if="fondo === 'osm' && errorTeselas" class="basemap-error" role="status">
@@ -460,10 +460,23 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
 .route-workspace .basemap-error { bottom: 245px; }
 @media (max-width: 840px) {
   .route-workspace .map-tools { top: var(--hud-top); left: var(--hud-gap); justify-content: center; }
-  .route-workspace .basemap-options .p-button { padding: 5px 7px; font-size: .7rem; }
+  .route-workspace .basemap-options .p-button { padding: 5px 7px; min-height: 34px; font-size: .7rem; }
   .route-workspace .map-hint { padding: 3px; font-size: .69rem; white-space: nowrap; }
   .route-workspace .leaflet-top.leaflet-left { bottom: 97px; }
   .route-workspace .map-overlay { bottom: 105px; }
   .route-workspace .map-legend, .route-workspace .leaflet-control-scale { display: none; }
 }
+.map-viewer .leaflet-container-root {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2230%22%20height%3D%2230%22%20viewBox%3D%220%200%2030%2030%22%3E%3Cpath%20d%3D%22M5%203%20L5%2023%20L10%2018%20L15%2026%20L19%2024%20L14%2016%20L22%2016%20Z%22%20fill%3D%22%2310382d%22%20stroke%3D%22white%22%20stroke-width%3D%222.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") 5 3, grab;
+}
+
+.map-viewer .leaflet-container-root .leaflet-interactive {
+  cursor: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2230%22%20height%3D%2230%22%20viewBox%3D%220%200%2030%2030%22%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2215%22%20r%3D%228%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%226%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2215%22%20r%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%2310382d%22%20stroke-width%3D%222.5%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2215%22%20r%3D%222.3%22%20fill%3D%22%2310382d%22%20stroke%3D%22white%22%2F%3E%3C%2Fsvg%3E") 15 15, pointer;
+}
+
+.leaflet-dragging .map-viewer .leaflet-container-root,
+.leaflet-dragging .map-viewer .leaflet-container-root .leaflet-interactive {
+  cursor: grabbing;
+}
+
 </style>

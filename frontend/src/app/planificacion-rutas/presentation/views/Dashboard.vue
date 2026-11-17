@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
 import GraphStatus from '../components/sidebar/GraphStatus.vue'
 import GraphAnalysis from '../components/sidebar/GraphAnalysis.vue'
 import Sidebar from '@/app/planificacion-rutas/presentation/components/sidebar/Sidebar.vue'
@@ -10,6 +9,7 @@ import { usePlanificadorStore } from '@/app/planificacion-rutas/application/stor
 import MetricsPanel from '@/app/planificacion-rutas/presentation/components/metrics/MetricsPanel.vue'
 import { useRutasStore } from '@/app/planificacion-rutas/application/stores/rutasStore'
 import { useAnalisisStore } from '@/app/planificacion-rutas/application/stores/analisisStore'
+const Dialog = defineAsyncComponent(() => import('primevue/dialog'))
 const MapViewer = defineAsyncComponent(() => import('@/app/planificacion-rutas/presentation/components/map/MapViewer.vue'))
 
 const grafo = useGrafoStore()
@@ -19,7 +19,11 @@ const analisis = useAnalisisStore()
 watch(() => grafo.mapa, () => plan.limpiar())
 const redAbierta = ref(false)
 const paso = computed(() => !plan.origen || plan.seleccionActiva === 'origen' ? 1 : !plan.destinos.length ? 2 : 3)
-const instrucciones = ['Selecciona el recojo', 'Selecciona una entrega', 'Calcula la ruta o agrega entregas']
+const instrucciones = computed(() => [
+  'Selecciona el recojo',
+  'Selecciona una entrega',
+  plan.parametros.tipoRecorrido === 'multi_entrega' ? 'Calcula la ruta o agrega entregas' : 'Calcula la ruta',
+])
 onMounted(() => { void grafo.cargar() })
 onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
 </script>
@@ -38,7 +42,7 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
     </div>
     <Sidebar />
     <MetricsPanel />
-    <Dialog v-model:visible="redAbierta" modal header="Red vial" :style="{ width: '28rem', maxWidth: 'calc(100vw - 24px)' }">
+    <Dialog v-if="redAbierta" v-model:visible="redAbierta" modal header="Red vial" :style="{ width: '28rem', maxWidth: 'calc(100vw - 24px)' }">
       <GraphStatus />
       <GraphAnalysis />
     </Dialog>
@@ -91,7 +95,7 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
   background: #087452;
   font-variant-numeric: tabular-nums;
 }
-@media (max-width: 1120px) {
+@media (max-width: 1260px) {
   .route-step { top: var(--hud-top); }
 }
 @media (max-width: 840px) {

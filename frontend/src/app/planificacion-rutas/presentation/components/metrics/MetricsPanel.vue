@@ -26,20 +26,20 @@ const metricas = computed(() => [
     <Transition name="metrics-reveal">
       <div v-if="rutas.resultado">
         <div class="distance-total"><span>Distancia total</span><strong>{{ formato(rutas.resultado.distanciaKm, 3) }} <small>km</small></strong></div>
-      <section class="visit-order" aria-labelledby="visit-order-title">
-        <h3 id="visit-order-title">Orden de las entregas</h3>
-        <ol><li v-for="(id, index) in rutas.resultado.ordenVisita" :key="`${index}-${id}`"><span>{{ index === 0 ? 'Punto de recojo' : index === rutas.resultado.ordenVisita.length - 1 && id === plan.origen?.id ? 'Retorno' : `Entrega ${index}` }}</span><strong>{{ id }}</strong></li></ol>
-      </section>
+        <section class="visit-order" aria-labelledby="visit-order-title">
+          <h3 id="visit-order-title">Orden de las entregas</h3>
+          <ol><li v-for="(id, index) in rutas.resultado.ordenVisita" :key="`${index}-${id}`"><span>{{ index === 0 ? 'Punto de recojo' : index === rutas.resultado.ordenVisita.length - 1 && id === plan.origen?.id ? 'Retorno' : `Entrega ${index}` }}</span><strong>{{ id }}</strong></li></ol>
+        </section>
         <details class="metrics-details">
           <summary>Métricas del algoritmo</summary>
           <p class="metric-explanation">{{ nombres[rutas.resultado.algoritmo] }} · Tráfico simulado</p>
-    <dl class="route-metrics">
-      <div v-for="metrica in metricas" :key="metrica.nombre" class="metric-card">
-        <dt><i class="pi" :class="metrica.icono" aria-hidden="true" />{{ metrica.nombre }}</dt>
-        <dd><span :class="{ 'metric-result': rutas.resultado }" :aria-label="metrica.valor === '—' ? 'Sin resultado' : undefined">{{ metrica.valor }}</span><small>{{ metrica.unidad }}</small></dd>
-      </div>
-    </dl>
-      <p class="metric-explanation">Tiempo del algoritmo: {{ formato(rutas.resultado.tiempoAlgoritmoMs, 3) }} ms<span v-if="rutas.resultado.tiempoMatrizMs !== null"> · Matriz vial: {{ formato(rutas.resultado.tiempoMatrizMs, 3) }} ms</span>. El tiempo de ejecución excluye la comunicación HTTP.</p>
+          <dl class="route-metrics">
+            <div v-for="metrica in metricas" :key="metrica.nombre" class="metric-card">
+              <dt><i class="pi" :class="metrica.icono" aria-hidden="true" />{{ metrica.nombre }}</dt>
+              <dd><span :class="{ 'metric-result': rutas.resultado }" :aria-label="metrica.valor === '—' ? 'Sin resultado' : undefined">{{ metrica.valor }}</span><small>{{ metrica.unidad }}</small></dd>
+            </div>
+          </dl>
+          <p class="metric-explanation">Tiempo del algoritmo: {{ formato(rutas.resultado.tiempoAlgoritmoMs, 3) }} ms<span v-if="rutas.resultado.tiempoMatrizMs !== null"> · Matriz vial: {{ formato(rutas.resultado.tiempoMatrizMs, 3) }} ms</span>. El tiempo de ejecución excluye la comunicación HTTP.</p>
         </details>
         <AlgorithmComparison />
       </div>
