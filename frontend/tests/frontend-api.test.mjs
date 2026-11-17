@@ -11,28 +11,11 @@ before(async () => {
     server: { middlewareMode: true },
     resolve: { alias: { '@': fileURLToPath(new URL('../src', import.meta.url)) } },
   })
-  ;({ HttpClient, HttpError } = await server.ssrLoadModule('/src/shared/infrastructure/http/httpClient.ts'))
-  ;({ leerEstado, leerResumen } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/dtos.ts'))
-  ;({ cargarEstadoGrafo } = await server.ssrLoadModule('/src/planificacion-rutas/application/use-cases/cargarGrafo.ts'))
+  ;({ HttpClient, HttpError } = await server.ssrLoadModule('/src/app/shared/infrastructure/http/httpClient.ts'))
+  ;({ leerEstado, leerResumen } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/dtos.ts'))
+  ;({ cargarEstadoGrafo } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/use-cases/cargarGrafo.ts'))
 })
 after(async () => { globalThis.fetch = originalFetch; await server?.close() })
-
-test('la zona se transmite por petición y no modifica la ruta predeterminada', async () => {
-  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
-  const paths = []
-  const repo = new HttpRuteaRepository({ get: async path => {
-    paths.push(path)
-    return path.includes('/health') ? { status: 'ok', dataset_disponible: true }
-      : { type: 'FeatureCollection', features: [] }
-  } })
-  await repo.consultarEstado()
-  repo.seleccionarZona('sur')
-  await repo.consultarEstado()
-  await repo.obtenerRed()
-  repo.seleccionarZona('centro')
-  await repo.consultarEstado()
-  assert.deepEqual(paths, ['/health', '/health?zona=sur', '/grafo/geojson?offset=0&limite=2000&zona=sur', '/health'])
-})
 
 test('HTTP JSON, errores FastAPI y respuestas HTML', async () => {
   const client = new HttpClient()
@@ -78,7 +61,7 @@ test('validación de contratos y dataset no disponible', async () => {
 })
 
 test('el repositorio adapta snake_case al dominio', async () => {
-  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
   const repo = new HttpRuteaRepository({ get: async path => path === '/health'
     ? { status: 'ok', dataset_disponible: true }
     : { nodos: 2726, aristas: 5387, dirigido: true, fuente: 'OSM', atribucion: 'OSM contributors' } })
@@ -91,8 +74,8 @@ test('el repositorio adapta snake_case al dominio', async () => {
 test('el store ignora una solicitud anterior al reintento', async () => {
   const { createApp } = await import('vue')
   const { createPinia } = await import('pinia')
-  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/planificacion-rutas/application/ports/dependencies.ts')
-  const { useGrafoStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/grafoStore.ts')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/ports/dependencies.ts')
+  const { useGrafoStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/grafoStore.ts')
   let completarPrimera
   let consultas = 0
   const repository = {
@@ -112,8 +95,8 @@ test('el store ignora una solicitud anterior al reintento', async () => {
 })
 
 test('el mapa carga todas las páginas y valida referencias', async () => {
-  const { cargarMapa } = await server.ssrLoadModule('/src/planificacion-rutas/application/use-cases/cargarMapa.ts')
-  const { leerRed, leerNodos } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/dtos.ts')
+  const { cargarMapa } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/use-cases/cargarMapa.ts')
+  const { leerRed, leerNodos } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/dtos.ts')
   const nodos = Array.from({ length: 2001 }, (_, i) => ({ id: String(i), lat: -12.1, lon: -77 }))
   const red = { type: 'FeatureCollection', features: [{ type: 'Feature',
     geometry: { type: 'LineString', coordinates: [[-77, -12.1], [-77.01, -12.11]] },
@@ -136,7 +119,7 @@ test('el mapa carga todas las páginas y valida referencias', async () => {
 
 test('selección de depósito y límites de entregas', async () => {
   const { createPinia } = await import('pinia')
-  const { usePlanificadorStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/planificadorStore.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/planificadorStore.ts')
   const plan = usePlanificadorStore(createPinia())
   const nodo = id => ({ id, lat: -12.1, lon: -77 })
   plan.seleccionarNodo(nodo('origen'))
@@ -170,7 +153,7 @@ const respuestaPunto = { algoritmo: 'dijkstra', origen: 'a', destino: 'b', minut
   geometria: { type: 'LineString', coordinates: [[-77, -12.1], [-77.01, -12.11]] } }
 
 test('POST usa el contrato exacto y preserva errores 404', async () => {
-  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
   globalThis.fetch = async (url, options) => {
     assert.equal(url, '/api/rutas/punto-a-punto')
     assert.equal(options.method, 'POST')
@@ -187,7 +170,7 @@ test('POST usa el contrato exacto y preserva errores 404', async () => {
 })
 
 test('valida respuestas de ruta y secuencias multi-entrega', async () => {
-  const { leerRuta } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/rutaDTO.ts')
+  const { leerRuta } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/rutaDTO.ts')
   for (const override of [{ distancia_km: NaN }, { nodos: ['b', 'a'] }, { algoritmo: 'otro' },
     { geometria: { type: 'LineString', coordinates: [[-77, 91], [-77, -12]] } }]) {
     assert.throws(() => leerRuta({ ...respuestaPunto, ...override }, solicitudPunto))
@@ -201,7 +184,7 @@ test('valida respuestas de ruta y secuencias multi-entrega', async () => {
   assert.equal(result.unidadEvaluados, 'estados')
   assert.deepEqual(result.ordenVisita, ['a', 'c', 'b', 'a'])
   assert.throws(() => leerRuta({ ...respuesta, orden_visita: ['a', 'c', 'c', 'a'] }, solicitud))
-  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
   const repo = new HttpRuteaRepository({ post: async (path, body) => {
     assert.equal(path, '/rutas/multi-entrega')
     assert.deepEqual(body, { origen: 'a', destinos: ['b', 'c'], algoritmo: 'held_karp', minuto_dia: 480, volver_origen: true })
@@ -211,7 +194,7 @@ test('valida respuestas de ruta y secuencias multi-entrega', async () => {
 })
 
 test('límites del cálculo y retorno al depósito', async () => {
-  const { validarSolicitudRuta } = await server.ssrLoadModule('/src/planificacion-rutas/application/use-cases/calcularRuta.ts')
+  const { validarSolicitudRuta } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/use-cases/calcularRuta.ts')
   const multi = { tipo: 'multi_entrega', origen: 'a', destinos: Array.from({ length: 9 }, (_, i) => String(i)),
     algoritmo: 'backtracking', minutoDia: 480, volverOrigen: false }
   assert.throws(() => validarSolicitudRuta(multi), /8 entregas/)
@@ -223,9 +206,9 @@ test('límites del cálculo y retorno al depósito', async () => {
 test('cambiar parámetros invalida una respuesta tardía y permite reintentar', async () => {
   const { createApp } = await import('vue')
   const { createPinia } = await import('pinia')
-  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/planificacion-rutas/application/ports/dependencies.ts')
-  const { usePlanificadorStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/planificadorStore.ts')
-  const { useRutasStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/rutasStore.ts')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/ports/dependencies.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/planificadorStore.ts')
+  const { useRutasStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/rutasStore.ts')
   let completar
   let signal
   const repository = { calcularRuta: async (_payload, inputSignal) => {
@@ -259,8 +242,8 @@ test('cambiar parámetros invalida una respuesta tardía y permite reintentar', 
 })
 
 test('comparaciones envían los mismos parámetros sin campo algoritmo', async () => {
-  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
-  const { leerComparacion } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/analisisDTO.ts')
+  const { HttpRuteaRepository } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/HttpRuteaRepository.ts')
+  const { leerComparacion } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/analisisDTO.ts')
   const response = { resultados: [respuestaPunto, { ...respuestaPunto, algoritmo: 'bellman_ford' }], costos_equivalentes: true }
   const repo = new HttpRuteaRepository({ post: async (path, body) => {
     assert.equal(path, '/rutas/comparar')
@@ -281,7 +264,7 @@ test('comparaciones envían los mismos parámetros sin campo algoritmo', async (
 })
 
 test('contratos UFDS, MST y sectores rechazan datos inconsistentes', async () => {
-  const { leerConectividad, leerMST, leerSectores } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/analisisDTO.ts')
+  const { leerConectividad, leerMST, leerSectores } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/analisisDTO.ts')
   const ufds = { origen: 'a', tipo: 'debil', garantiza_ruta_dirigida: false, destinos: [{ id: 'b', misma_componente: true }] }
   assert.equal(leerConectividad(ufds, 'a', ['b']).destinos[0].mismaComponente, true)
   assert.throws(() => leerConectividad({ ...ufds, garantiza_ruta_dirigida: true }, 'a', ['b']))
@@ -300,10 +283,10 @@ test('contratos UFDS, MST y sectores rechazan datos inconsistentes', async () =>
 test('la comparación conserva ambas rutas y se invalida al cambiar la hora', async () => {
   const { createApp } = await import('vue')
   const { createPinia } = await import('pinia')
-  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/planificacion-rutas/application/ports/dependencies.ts')
-  const { usePlanificadorStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/planificadorStore.ts')
-  const { useRutasStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/rutasStore.ts')
-  const { leerRuta } = await server.ssrLoadModule('/src/planificacion-rutas/infrastructure/api/rutaDTO.ts')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/ports/dependencies.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/planificadorStore.ts')
+  const { useRutasStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/rutasStore.ts')
+  const { leerRuta } = await server.ssrLoadModule('/src/app/planificacion-rutas/infrastructure/api/rutaDTO.ts')
   const a = leerRuta(respuestaPunto, solicitudPunto)
   const b = { ...a, algoritmo: 'bellman_ford' }
   const pinia = createPinia()
@@ -324,10 +307,10 @@ test('la comparación conserva ambas rutas y se invalida al cambiar la hora', as
 test('análisis cancela capas obsoletas y conserva caché de la sesión', async () => {
   const { createApp } = await import('vue')
   const { createPinia } = await import('pinia')
-  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/planificacion-rutas/application/ports/dependencies.ts')
-  const { useGrafoStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/grafoStore.ts')
-  const { usePlanificadorStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/planificadorStore.ts')
-  const { useAnalisisStore } = await server.ssrLoadModule('/src/planificacion-rutas/application/stores/analisisStore.ts')
+  const { ruteaRepositoryKey } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/ports/dependencies.ts')
+  const { useGrafoStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/grafoStore.ts')
+  const { usePlanificadorStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/planificadorStore.ts')
+  const { useAnalisisStore } = await server.ssrLoadModule('/src/app/planificacion-rutas/application/stores/analisisStore.ts')
   let completar, signal, lecturas = 0
   const mst = { nodos: 2, aristas: 0, componentes: 2, distanciaKm: 0, tiempoMs: 1, esArbol: false, red: { type: 'FeatureCollection', features: [] } }
   const repository = { obtenerMST: async inputSignal => { signal = inputSignal; return new Promise(resolve => { completar = resolve }) },

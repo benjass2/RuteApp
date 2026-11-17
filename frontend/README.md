@@ -3,15 +3,6 @@
 Documentación técnica del cliente web. Para la presentación y el inicio rápido
 del proyecto, consultar el [README general](../README.md).
 
-El selector «Zona de reparto» conserva Miraflores y San Isidro como opción
-predeterminada y añade Chorrillos, San Juan de Miraflores, Villa El Salvador y
-Barranco. El repositorio envía la zona en cada petición, sin modificar un estado
-global del servidor. Cambiarla cancela la carga anterior y limpia selección,
-resultados y análisis. El título y el encuadre del mapa se ajustan a la zona.
-La red de calles de la zona sur se descarga en páginas de 2000 arcos.
-`RUTEA_API_TARGET` permite cambiar el destino del proxy de Vite para pruebas;
-por defecto continúa usando `http://127.0.0.1:8000`.
-
 Aplicación académica de rutas en Miraflores y San Isidro. Vue 3 + TypeScript +
 Vite dentro de `frontend/`; FastAPI y datos OpenStreetMap en `../backend/`.
 
@@ -27,14 +18,14 @@ Pinia mantiene la selección hasta recargar la página.
 | Carpeta | Responsabilidad |
 | --- | --- |
 | `src/app` | Arranque y composición de dependencias de la aplicación. |
-| `src/planificacion-rutas/domain` | Modelos y contratos del bounded context. |
-| `src/planificacion-rutas/application` | Casos de uso y stores Pinia. |
-| `src/planificacion-rutas/infrastructure` | Adaptador y DTOs específicos de la API. |
-| `src/planificacion-rutas/presentation` | Vistas, componentes y estilos del contexto. |
-| `src/shared` | Utilidades de dominio, transporte HTTP y presentación comunes. |
+| `src/app/planificacion-rutas/domain` | Modelos y contratos del bounded context. |
+| `src/app/planificacion-rutas/application` | Casos de uso y stores Pinia. |
+| `src/app/planificacion-rutas/infrastructure` | Adaptador y DTOs específicos de la API. |
+| `src/app/planificacion-rutas/presentation` | Vistas, componentes y estilos del contexto. |
+| `src/app/shared` | Utilidades de dominio, transporte HTTP y presentación comunes. |
 
 `main.ts` delega en `src/app/bootstrap.ts`, que registra Pinia y PrimeVue. El tema está en
-`src/shared/presentation/theme/ruteaTheme.ts`. `src/app/presentation/App.vue` monta Dashboard; los componentes
+`src/app/ruteaTheme.ts`. `src/app/App.vue` monta Dashboard; los componentes
 PrimeVue se importan individualmente. Las carpetas de etapas siguientes tienen
 README con su responsabilidad. Leaflet se carga de forma diferida con MapViewer.
 La distribución completa y las reglas de dependencia están en [src/README.md](src/README.md).

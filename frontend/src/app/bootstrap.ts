@@ -1,12 +1,11 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
-import App from './presentation/App.vue'
-import { ruteaTheme } from '@/shared/presentation/theme/ruteaTheme'
-import { ruteaRepositoryKey } from '@/planificacion-rutas/application/ports/dependencies'
-import { ruteaRepository } from './infrastructure/dependencies'
+import App from './App.vue'
+import { ruteaTheme } from './ruteaTheme'
+import { ruteaRepositoryKey } from '@/app/planificacion-rutas/application/ports/dependencies'
+import { ruteaRepository } from './dependencies'
 import 'primeicons/primeicons.css'
-import '@/shared/presentation/styles/main.css'
 
 /** Composition root: aquí se conectan proveedores, contratos y plugins. */
 export function crearAplicacion() {
