@@ -61,7 +61,6 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
   color: #162b24;
 }
 .hud-surface {
@@ -84,7 +83,7 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
 .route-header { left: var(--hud-gap); }
 .route-header strong { color: #07553e; letter-spacing: -.035em; font-size: 1.15rem; }
 .route-header > span { font-size: .75rem; color: #40584f; }
-.route-step { left: 50%; transform: translateX(-50%); font-size: .82rem; font-weight: 650; }
+.route-step { left: 50%; transform: translateX(-50%); font-size: .9375rem; font-weight: 650; }
 .route-step-number {
   display: grid;
   place-items: center;
@@ -95,13 +94,16 @@ onBeforeUnmount(() => { grafo.cancelar(); rutas.limpiar(); analisis.limpiar() })
   background: #087452;
   font-variant-numeric: tabular-nums;
 }
-@media (max-width: 1260px) {
+@media (max-width: 1400px) {
   .route-step { top: var(--hud-top); }
 }
 @media (max-width: 840px) {
   .route-workspace { --hud-gap: 10px; --hud-top: 62px; }
   .route-header { right: var(--hud-gap); }
   .route-header .p-button { margin-left: auto; }
-  .route-step { top: 114px; white-space: nowrap; max-width: calc(100% - 24px); }
+  .route-step { top: 114px; width: max-content; max-width: calc(100% - 24px); }
+}
+@media (max-width: 420px) {
+  .route-step { top: 150px; }
 }
 </style>

@@ -61,8 +61,8 @@ const metricas = computed(() => [
   border: 1px solid rgba(0,0,0,.08);
   border-radius: 16px;
 }
-.metrics-panel.hud-surface h2 { margin: 0 0 6px; font-size: .95rem; }
-.metrics-status { margin: 0; color: #40584f; font-size: .78rem; line-height: 1.45; }
+.metrics-panel.hud-surface h2 { margin: 0 0 6px; font-size: 1.125rem; }
+.metrics-status { margin: 0; color: #40584f; font-size: .875rem; line-height: 1.45; }
 .distance-total { display: grid; gap: 4px; margin: 18px 0; color: #345348; font-size: .8rem; }
 .distance-total strong { font-size: 2rem; color: #07553e; font-variant-numeric: tabular-nums; }
 .distance-total small { font-size: .9rem; }

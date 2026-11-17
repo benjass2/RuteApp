@@ -58,8 +58,8 @@ function seleccionar(id: string | null, tipo: 'origen' | 'destino') {
 
 <style>
 .graph-description {
-    font-size: .75rem;
-    color: #718078;
+    font-size: .8125rem;
+    color: #40584f;
     line-height: 1.6;
     margin-bottom: 8px;
 }
@@ -72,13 +72,14 @@ function seleccionar(id: string | null, tipo: 'origen' | 'destino') {
 
 .route-parameters > label {
     display: block;
-    font-size: .78rem;
+    font-size: .9375rem;
+    font-weight: 600;
     margin: 16px 0 8px;
 }
 
 .route-parameters > .p-select {
     width: 100%;
-    font-size: .8rem;
+    font-size: .875rem;
 }
 
 .selection-options {
@@ -88,7 +89,7 @@ function seleccionar(id: string | null, tipo: 'origen' | 'destino') {
 
 .selection-options .p-button {
     flex: 1;
-    font-size: .75rem;
+    font-size: .875rem;
 }
 
 .stop-list {

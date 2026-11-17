@@ -328,7 +328,7 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
     padding: 10px;
     border-radius: 7px;
     background: #ffffffed;
-    font-size: .65rem;
+    font-size: .8125rem;
     color: #42604c;
 }
 
@@ -461,8 +461,8 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
   border-radius: 999px;
   box-shadow: 0 6px 22px rgba(24,52,44,.14);
 }
-.basemap-options .p-button { border-radius: 999px; }
-.route-workspace .map-hint { background: transparent; padding: 4px 8px; color: #314a40; }
+.basemap-options .p-button { border-radius: 999px; font-size: .875rem; }
+.route-workspace .map-hint { background: transparent; padding: 4px 8px; color: #314a40; font-size: .8125rem; }
 .map-hint input { accent-color: #087452; vertical-align: middle; }
 .route-workspace .map-overlay, .route-workspace .basemap-error {
   inset: auto auto 56px 50%;
@@ -475,8 +475,8 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
 .route-workspace .basemap-error { bottom: 245px; }
 @media (max-width: 840px) {
   .route-workspace .map-tools { top: var(--hud-top); left: var(--hud-gap); justify-content: center; }
-  .route-workspace .basemap-options .p-button { padding: 5px 7px; min-height: 34px; font-size: .7rem; }
-  .route-workspace .map-hint { padding: 3px; font-size: .69rem; white-space: nowrap; }
+  .route-workspace .basemap-options .p-button { padding: 5px 7px; min-height: 34px; font-size: .875rem; }
+  .route-workspace .map-hint { padding: 3px; font-size: .8125rem; white-space: nowrap; }
   .route-workspace .leaflet-top.leaflet-left { bottom: 97px; }
   .route-workspace .map-overlay { bottom: 105px; }
   .route-workspace .map-legend, .route-workspace .leaflet-control-scale { display: none; }

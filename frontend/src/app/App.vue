@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '@fontsource-variable/inter'
 import Dashboard from '@/app/planificacion-rutas/presentation/views/Dashboard.vue'
 </script>
 <template>
@@ -7,7 +8,7 @@ import Dashboard from '@/app/planificacion-rutas/presentation/views/Dashboard.vu
 
 <style>
 :root {
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
     color: #18342c;
     background: #e1e1e1;
     font-synthesis: none;
@@ -23,7 +24,7 @@ body {
     min-width: 320px;
 }
 
-button, input {
+button, input, select {
     font: inherit;
 }
 

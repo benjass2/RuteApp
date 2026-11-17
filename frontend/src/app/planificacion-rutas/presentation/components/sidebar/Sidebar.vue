@@ -54,16 +54,16 @@ const store = usePlanificadorStore()
   overscroll-behavior-y: contain;
 }
 .planner-panel::-webkit-scrollbar { display: none; }
-.planner-panel h2 { margin: 0 0 16px; font-size: 1.12rem; letter-spacing: -.02em; }
+.planner-panel h2 { margin: 0 0 16px; font-size: 1.25rem; letter-spacing: -.02em; }
 .mode-options { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #eaf1ed; }
-.mode-options .p-button { flex: 1; padding: 8px 5px; font-size: .78rem; white-space: nowrap; }
+.mode-options .p-button { flex: 1; padding: 8px 5px; font-size: .875rem; white-space: nowrap; }
 .mode-options .p-button[aria-pressed="true"] { background: #087452; border-color: #087452; }
 .mode-options .p-button[aria-pressed="false"] { background: transparent; border-color: transparent; color: #314a40; }
 .time-header, .time-range { display: flex; justify-content: space-between; align-items: center; }
-.time-header { margin: 17px 0 12px; font-size: .85rem; }
+.time-header { margin: 17px 0 12px; font-size: .9375rem; }
 .time-header strong, .time-range { font-variant-numeric: tabular-nums; }
-.time-range { margin-top: 9px; color: #43594f; font-size: .68rem; }
-.simulation-note { margin: 8px 0; color: #43594f; font-size: .72rem; }
+.time-range { margin-top: 9px; color: #43594f; font-size: .8125rem; }
+.simulation-note { margin: 8px 0; color: #43594f; font-size: .8125rem; line-height: 1.5; }
 .planner-toggle { display: none; }
 @media (max-width: 840px) {
   .planner-panel { inset: auto 10px 28px; width: auto; max-height: 48dvh; padding: 12px 16px; }
