@@ -74,7 +74,7 @@ function pintarRuta() {
     style: { color: '#126747', weight: 6, opacity: .95, interactive: false },
     pointToLayer: (_feature, latlng) => L.circleMarker(latlng, { radius: 7, color: '#126747' }),
   }).addTo(map)
-  map.fitBounds(recorrido.getBounds(), { padding: [40, 40], maxZoom: 17 })
+  encuadrar(recorrido.getBounds(), 17)
   pintarSeleccion()
 }
 
@@ -84,9 +84,20 @@ function texto(value: string): HTMLElement {
   return element
 }
 
+function encuadrar(bounds: L.LatLngBounds, maxZoom: number) {
+  if (!map || !bounds.isValid()) return
+  const ancho = map.getSize().x
+  const compacto = ancho <= 840
+  map.fitBounds(bounds, {
+    paddingTopLeft: compacto ? [24, 155] : [350, 115],
+    paddingBottomRight: compacto ? [28, 105] : [315, 42],
+    maxZoom,
+  })
+}
+
 function centrar() {
   const bounds = calles?.getBounds()
-  if (bounds?.isValid()) map?.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 })
+  if (bounds) encuadrar(bounds, 15)
 }
 
 function ajustarNodos() {
@@ -189,7 +200,7 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
       <i class="pi" :class="grafo.estadoMapa === 'cargando' ? 'pi-spin pi-spinner' : 'pi-map'" aria-hidden="true" />
       <h2>{{ grafo.estadoMapa === 'cargando' ? 'Cargando red vial…' : 'La ciudad, punto a punto' }}</h2>
       <p v-if="grafo.estadoMapa === 'error'">{{ grafo.errorMapa }}</p>
-      <p v-else-if="grafo.estado === 'error'">Conecta FastAPI y pulsa Reintentar conexión en el panel.</p>
+      <p v-else-if="grafo.estado === 'error'">Comprueba FastAPI y reintenta desde Red vial.</p>
       <p v-else-if="grafo.estado === 'sin_dataset'">El backend necesita cargar el dataset local para mostrar las calles.</p>
       <p v-else>Preparando las calles e intersecciones de Miraflores y San Isidro.</p>
       <Button v-if="grafo.estadoMapa === 'error'" label="Reintentar mapa" icon="pi pi-refresh" @click="grafo.cargarRed()" />
@@ -199,9 +210,8 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
         <Button label="Mapa OSM" size="small" :severity="fondo === 'osm' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'osm'" @click="fondo = 'osm'" />
         <Button label="Solo grafo" size="small" :severity="fondo === 'local' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'local'" @click="fondo = 'local'" />
         <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" :disabled="grafo.estadoMapa !== 'listo'" @click="centrar" />
+      <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Intersecciones</label>
       </div>
-      <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Mostrar intersecciones</label>
-      <span v-if="grafo.estadoMapa === 'listo' && (fondo === 'local' || mostrarRed)" class="map-hint">Selecciona {{ plan.seleccionActiva === 'origen' ? 'el punto de recojo' : 'una entrega' }} en una intersección</span>
     </div>
     <div v-if="fondo === 'osm' && errorTeselas" class="basemap-error" role="status">
       <p>No se pudieron cargar algunas imágenes de OpenStreetMap. Comprueba tu conexión o utiliza Solo grafo.</p>
@@ -414,5 +424,46 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
     height: 3px;
     background: #126747;
     vertical-align: middle;
+}
+.route-workspace .map-viewer {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+.route-workspace .leaflet-container-root { min-height: 0; }
+.route-workspace .leaflet-top.leaflet-left { top: auto; bottom: 31px; }
+.route-workspace .map-tools { top: var(--hud-gap); right: var(--hud-gap); }
+.route-workspace .basemap-options {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 5px;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 999px;
+  box-shadow: 0 6px 22px rgba(24,52,44,.14);
+}
+.basemap-options .p-button { border-radius: 999px; }
+.route-workspace .map-hint { background: transparent; padding: 4px 8px; color: #314a40; }
+.map-hint input { accent-color: #087452; vertical-align: middle; }
+.route-workspace .map-overlay, .route-workspace .basemap-error {
+  inset: auto auto 56px 50%;
+  width: min(320px, calc(100% - 32px));
+  transform: translateX(-50%);
+  border-radius: 14px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 6px 22px rgba(24,52,44,.14);
+}
+.route-workspace .basemap-error { bottom: 245px; }
+@media (max-width: 840px) {
+  .route-workspace .map-tools { top: var(--hud-top); left: var(--hud-gap); justify-content: center; }
+  .route-workspace .basemap-options .p-button { padding: 5px 7px; font-size: .7rem; }
+  .route-workspace .map-hint { padding: 3px; font-size: .69rem; white-space: nowrap; }
+  .route-workspace .leaflet-top.leaflet-left { bottom: 97px; }
+  .route-workspace .map-overlay { bottom: 105px; }
+  .route-workspace .map-legend, .route-workspace .leaflet-control-scale { display: none; }
 }
 </style>

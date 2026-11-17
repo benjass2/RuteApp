@@ -20,7 +20,8 @@ const motivo = computed(() => grafo.estadoMapa !== 'listo' ? 'Espera a que la re
 
 <template>
   <section class="algorithm-section" aria-labelledby="algorithm-title">
-    <h3 id="algorithm-title">Motor de rutas</h3>
+    <details class="route-advanced">
+      <summary id="algorithm-title">Opciones avanzadas</summary>
     <fieldset class="algorithm-options">
       <legend class="sr-only">Algoritmo para calcular el recorrido</legend>
       <template v-if="plan.parametros.tipoRecorrido === 'punto_a_punto'">
@@ -39,21 +40,26 @@ const motivo = computed(() => grafo.estadoMapa !== 'listo' ? 'Espera a que la re
     <label v-if="plan.parametros.tipoRecorrido === 'multi_entrega'" for="volver-origen" class="return-option">
       <Checkbox v-model="plan.volverOrigen" input-id="volver-origen" binary />Volver al punto de recojo
     </label>
-    <p id="route-guidance" class="route-guidance">{{ motivo || 'Todo listo para calcular con el tráfico de la hora seleccionada.' }}</p>
-    <Button :label="rutas.estado === 'error' ? 'Reintentar cálculo' : 'Calcular ruta óptima'" icon="pi pi-directions"
-      class="calculate-button" :loading="rutas.estado === 'cargando' && rutas.operacion === 'calculo'" :disabled="!!motivo || rutas.estado === 'cargando'"
-      aria-describedby="route-guidance" @click="rutas.calcular()" />
     <Button label="Comparar algoritmos" icon="pi pi-chart-bar" outlined class="compare-button"
       :loading="rutas.estado === 'cargando' && rutas.operacion === 'comparacion'"
       :disabled="grafo.estadoMapa !== 'listo' || !!rutas.motivoComparacion || rutas.estado === 'cargando'"
       aria-describedby="comparison-guidance" @click="rutas.comparar()" />
     <p id="comparison-guidance" class="analysis-note">{{ rutas.motivoComparacion || (plan.parametros.tipoRecorrido === 'punto_a_punto' ? 'Compara Dijkstra y Bellman-Ford con los mismos puntos y hora.' : 'Compara Held-Karp y backtracking con una matriz compartida.') }}</p>
+    </details>
+    <p id="route-guidance" class="route-guidance">{{ motivo || 'Todo listo para calcular con el tráfico de la hora seleccionada.' }}</p>
+    <Button :label="rutas.estado === 'error' ? 'Reintentar cálculo' : 'Calcular ruta'" icon="pi pi-directions"
+      class="calculate-button" :loading="rutas.estado === 'cargando' && rutas.operacion === 'calculo'" :disabled="!!motivo || rutas.estado === 'cargando'"
+      aria-describedby="route-guidance" @click="rutas.calcular()" />
     <Button v-if="rutas.estado === 'cargando'" label="Cancelar cálculo" text severity="secondary" @click="rutas.limpiar()" />
     <Message v-if="rutas.error" severity="error" :closable="false" class="route-error">{{ rutas.error }}</Message>
   </section>
 </template>
 
 <style>
+.route-advanced summary { cursor: pointer; font-size: .85rem; font-weight: 650; }
+.route-advanced .algorithm-options { margin-top: 12px; }
+.calculate-button.p-button { background: #087452; border-color: #087452; }
+
 .algorithm-section {
     margin-top: 24px;
     padding-top: 24px;
