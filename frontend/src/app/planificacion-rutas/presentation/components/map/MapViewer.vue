@@ -27,6 +27,12 @@ let recorrido: L.GeoJSON | undefined
 let troncal: L.GeoJSON | undefined
 let rendererNodos: L.Canvas | undefined
 const puntos = new Map<string, L.CircleMarker>()
+const estiloInterseccion: L.PathOptions = {
+  color: '#fff',
+  fillColor: '#14515c',
+  weight: 1.2,
+  fillOpacity: 1,
+}
 
 function cambiarFondo() {
   if (!map || !base) return
@@ -60,7 +66,7 @@ function pintarSectores() {
   }
   puntos.forEach((punto, id) => {
     const color = colores.get(id)
-    punto.setStyle({ color: color ?? '#436757', fillColor: color ?? '#fff', fillOpacity: color ? 1 : .9 })
+    punto.setStyle({ ...estiloInterseccion, fillColor: color ?? estiloInterseccion.fillColor })
   })
   cambiarFondo()
 }
@@ -139,7 +145,7 @@ function pintarRed() {
   for (const nodo of data.nodos) {
     const punto = L.circleMarker([nodo.lat, nodo.lon], {
       pane: 'nodos', renderer: rendererNodos,
-      radius: 3, weight: .7, color: '#436757', fillColor: '#fff', fillOpacity: .9,
+      radius: 3, ...estiloInterseccion,
       bubblingMouseEvents: false,
     }).bindTooltip(() => texto(`Intersección ${nodo.id}`))
       .on('click', () => plan.seleccionarNodo(nodo)).addTo(nodos)
@@ -334,7 +340,7 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
 }
 
 .junction {
-    background: #8ba797;
+    background: #14515c;
 }
 
 .map-viewer .selection-marker {
