@@ -33,7 +33,7 @@ const store = usePlanificadorStore()
       aria-labelledby="hora-label"
       @update:model-value="value => { if (typeof value === 'number') store.cambiarMinuto(value) }" />
     <div class="time-range"><span>00:00</span><span>23:59</span></div>
-    <p class="simulation-note"><i class="pi pi-info-circle" aria-hidden="true" /> Tráfico horario simulado con fines académicos.</p>
+    <p class="simulation-note"><i class="pi pi-info-circle" aria-hidden="true" /> La hora de salida fija el tráfico simulado para todos los tramos del reparto.</p>
     <RouteParameters />
     <AlgorithmSelector />
     </div>
