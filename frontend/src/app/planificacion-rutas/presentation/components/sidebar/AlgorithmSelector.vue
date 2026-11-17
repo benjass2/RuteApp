@@ -58,7 +58,6 @@ const motivo = computed(() => grafo.estadoMapa !== 'listo' ? 'Espera a que la re
 <style>
 .route-advanced summary { cursor: pointer; font-size: .85rem; font-weight: 650; }
 .route-advanced .algorithm-options { margin-top: 12px; }
-.calculate-button.p-button { background: #087452; border-color: #087452; }
 
 .algorithm-section {
     margin-top: 24px;

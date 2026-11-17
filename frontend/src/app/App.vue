@@ -33,7 +33,7 @@ a {
 }
 
 :focus-visible {
-    outline: 3px solid #1f8062;
+    outline: 3px solid #07553e;
     outline-offset: 4px;
 }
 
@@ -49,8 +49,20 @@ h1, h2, p {
 }
 
 .muted {
-    color: #718078;
+    color: #40584f;
     font-size: .88rem;
     line-height: 1.7;
 }
+.p-button:disabled {
+    opacity: 1;
+    background: #e7ece9;
+    border-color: #8d9e95;
+    color: #4d6057;
+    cursor: not-allowed;
+}
+
+.p-button:focus-visible {
+    box-shadow: 0 0 0 2px #fff;
+}
+
 </style>

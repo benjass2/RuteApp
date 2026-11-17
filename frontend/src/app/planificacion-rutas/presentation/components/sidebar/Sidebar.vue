@@ -57,8 +57,8 @@ const store = usePlanificadorStore()
 .planner-panel h2 { margin: 0 0 16px; font-size: 1.25rem; letter-spacing: -.02em; }
 .mode-options { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #eaf1ed; }
 .mode-options .p-button { flex: 1; padding: 8px 5px; font-size: .875rem; white-space: nowrap; }
-.mode-options .p-button[aria-pressed="true"] { background: #087452; border-color: #087452; }
-.mode-options .p-button[aria-pressed="false"] { background: transparent; border-color: transparent; color: #314a40; }
+.mode-options .p-button[aria-pressed="false"] { background: transparent; border-color: transparent; color: #234239; }
+.mode-options .p-button[aria-pressed="false"]:hover { background: #dcebe3; }
 .time-header, .time-range { display: flex; justify-content: space-between; align-items: center; }
 .time-header { margin: 17px 0 12px; font-size: .9375rem; }
 .time-header strong, .time-range { font-variant-numeric: tabular-nums; }

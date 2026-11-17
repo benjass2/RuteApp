@@ -63,7 +63,7 @@ const formato = new Intl.NumberFormat('es-PE')
 
 .graph-description {
     font-size: .75rem;
-    color: #718078;
+    color: #40584f;
     line-height: 1.6;
     margin-bottom: 8px;
 }
@@ -71,7 +71,7 @@ const formato = new Intl.NumberFormat('es-PE')
 .graph-attribution {
     display: block;
     font-size: .65rem;
-    color: #718078;
+    color: #40584f;
     margin-bottom: 8px;
 }
 
@@ -90,7 +90,7 @@ const formato = new Intl.NumberFormat('es-PE')
 
 .graph-counts dt {
     font-size: .65rem;
-    color: #718078;
+    color: #40584f;
 }
 
 .graph-counts dd {

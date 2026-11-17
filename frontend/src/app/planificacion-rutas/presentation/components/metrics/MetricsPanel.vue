@@ -107,7 +107,7 @@ const metricas = computed(() => [
     margin: 16px 0 20px;
     font-size: .8rem;
     line-height: 1.7;
-    color: #718078;
+    color: #40584f;
 }
 
 .route-metrics {
@@ -127,7 +127,7 @@ const metricas = computed(() => [
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #718078;
+    color: #40584f;
     font-size: .75rem;
 }
 
@@ -150,7 +150,7 @@ const metricas = computed(() => [
 
 .metric-card small {
     font-size: .65rem;
-    color: #8a958c;
+    color: #40584f;
 }
 
 .trip-summary {
@@ -173,7 +173,7 @@ const metricas = computed(() => [
 }
 
 .trip-summary dt {
-    color: #718078;
+    color: #40584f;
 }
 
 .trip-summary dd {
