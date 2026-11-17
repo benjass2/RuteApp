@@ -101,6 +101,12 @@ function encuadrar(bounds: L.LatLngBounds, maxZoom: number) {
   })
 }
 
+function limpiarPantalla() {
+  plan.limpiar()
+  rutas.limpiar()
+  analisis.limpiar()
+}
+
 function centrar() {
   const bounds = calles?.getBounds()
   if (bounds) encuadrar(bounds, 15)
@@ -212,10 +218,13 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
       <Button v-if="grafo.estadoMapa === 'error'" label="Reintentar mapa" icon="pi pi-refresh" @click="grafo.cargarRed()" />
     </div>
     <div class="map-tools">
-      <div class="basemap-options" role="group" aria-label="Mapa base">
+      <div class="basemap-options" role="group" aria-label="Controles del mapa">
         <Button label="Mapa OSM" size="small" :severity="fondo === 'osm' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'osm'" @click="fondo = 'osm'" />
         <Button label="Solo grafo" size="small" :severity="fondo === 'local' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'local'" @click="fondo = 'local'" />
         <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" :disabled="grafo.estadoMapa !== 'listo'" @click="centrar" />
+        <Button class="clear-map-button" icon="pi pi-trash" label="Limpiar pantalla"
+          aria-label="Limpiar pantalla" title="Limpiar pantalla" size="small" severity="secondary"
+          @click="limpiarPantalla" />
         <label v-if="fondo === 'osm' && grafo.estadoMapa === 'listo'" class="map-hint"><input v-model="mostrarRed" type="checkbox"> Intersecciones</label>
       </div>
     </div>
@@ -485,4 +494,8 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
   cursor: grabbing;
 }
 
+@media (max-width: 980px) {
+  .clear-map-button .p-button-label { display: none; }
+  .clear-map-button.p-button { min-width: 34px; }
+}
 </style>
