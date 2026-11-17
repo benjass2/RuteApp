@@ -50,7 +50,10 @@ const store = usePlanificadorStore()
   max-height: calc(100% - var(--hud-top) - 44px);
   padding: 18px;
   overflow: auto;
+  scrollbar-width: none;
+  overscroll-behavior-y: contain;
 }
+.planner-panel::-webkit-scrollbar { display: none; }
 .planner-panel h2 { margin: 0 0 16px; font-size: 1.12rem; letter-spacing: -.02em; }
 .mode-options { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #eaf1ed; }
 .mode-options .p-button { flex: 1; padding: 8px 5px; font-size: .78rem; white-space: nowrap; }
