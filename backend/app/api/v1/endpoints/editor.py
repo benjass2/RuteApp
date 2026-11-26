@@ -34,7 +34,23 @@ def distancia(a, b):
 
 def inicializar_editor(app, original: Path):
     app.state.editor_original = original
-    app.state.editor_path = original.with_name(original.stem + "_editable.json")
+
+    ruta_predeterminada = original.with_name(
+        original.stem + "_editable.json"
+    )
+
+    app.state.editor_path = Path(
+        os.environ.get(
+            "RUTEA_EDITABLE_PATH",
+            str(ruta_predeterminada),
+        )
+    )
+
+    app.state.editor_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
     app.state.editor_lock = RLock()
 
 
