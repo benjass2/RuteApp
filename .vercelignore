@@ -18,5 +18,5 @@ backend/scripts
 *.log
 .env
 .env.*
-api/
+/api/
 
