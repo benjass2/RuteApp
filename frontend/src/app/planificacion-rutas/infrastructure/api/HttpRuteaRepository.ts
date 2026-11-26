@@ -9,6 +9,10 @@ import type { Conectividad, RedMST, Sector } from '@/app/planificacion-rutas/dom
 import { leerComparacion, leerConectividad, leerMST, leerSectores } from './analisisDTO'
 
 export class HttpRuteaRepository implements RuteaRepository {
+  async editarRed(cambio: import('../../domain/models/edicion').CambioRed): Promise<void> {
+    await this.http.post('/grafo/editor', cambio)
+  }
+
   constructor(private readonly http: HttpClient) {}
 
   async consultarEstado(signal?: AbortSignal): Promise<EstadoServidor> {

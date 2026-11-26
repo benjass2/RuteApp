@@ -38,7 +38,7 @@ class _AristaArchivo(BaseModel):
 
 class _ArchivoGrafo(BaseModel):
     nodos: dict[str, _NodoArchivo] = Field(min_length=1)
-    aristas: list[_AristaArchivo] = Field(min_length=1)
+    aristas: list[_AristaArchivo]
 
 
 class JsonGrafoRepository:

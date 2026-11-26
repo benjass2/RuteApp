@@ -62,3 +62,4 @@ build/
 # Variables de entorno adicionales por seguridad
 .env.*
 !.env.example
+/backend/dataset/*_editable.json

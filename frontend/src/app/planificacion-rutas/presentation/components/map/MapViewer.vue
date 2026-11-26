@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as L from 'leaflet'
+import InputText from 'primevue/inputtext'
+import Dialog from 'primevue/dialog'
+import { reactive } from 'vue'
 import Button from 'primevue/button'
 import { useGrafoStore } from '@/app/planificacion-rutas/application/stores/grafoStore'
 import { usePlanificadorStore } from '@/app/planificacion-rutas/application/stores/planificadorStore'
@@ -101,6 +104,43 @@ function encuadrar(bounds: L.LatLngBounds, maxZoom: number) {
   })
 }
 
+const modoEditor = ref(false)
+const formularioAbierto = ref(false)
+const guardando = ref(false)
+const errorEdicion = ref('')
+const formulario = reactive({
+  operacion: 'agregar' as 'agregar' | 'actualizar',
+  id: '', lat: 0, lon: 0, conexiones: [] as string[], bidireccional: true,
+})
+function nuevoNodo(evento: L.LeafletMouseEvent) {
+  if (!modoEditor.value || grafo.estadoMapa !== 'listo') return
+  Object.assign(formulario, {
+    operacion: 'agregar', id: 'manual-' + Date.now(), lat: evento.latlng.lat,
+    lon: evento.latlng.lng, conexiones: [], bidireccional: true,
+  })
+  errorEdicion.value = ''
+  formularioAbierto.value = true
+}
+function elegirNodo(nodo: { id: string; lat: number; lon: number }) {
+  if (!modoEditor.value) { plan.seleccionarNodo(nodo); return }
+  Object.assign(formulario, { operacion: 'actualizar', ...nodo, conexiones: [] })
+  errorEdicion.value = ''
+  formularioAbierto.value = true
+}
+async function guardarEdicion(operacion: 'agregar' | 'actualizar' | 'eliminar' | 'restaurar') {
+  if (guardando.value) return
+  guardando.value = true
+  errorEdicion.value = ''
+  try {
+    await grafo.editarRed({ ...formulario, conexiones: [...formulario.conexiones], operacion })
+    rutas.limpiar()
+    analisis.limpiar()
+    formularioAbierto.value = false
+  } catch (error) {
+    errorEdicion.value = error instanceof Error ? error.message : 'No se pudo guardar.'
+  } finally { guardando.value = false }
+}
+
 function limpiarPantalla() {
   plan.limpiar()
   rutas.limpiar()
@@ -154,7 +194,7 @@ function pintarRed() {
       radius: 3, ...estiloInterseccion,
       bubblingMouseEvents: false,
     }).bindTooltip(() => texto(`Intersección ${nodo.id}`))
-      .on('click', () => plan.seleccionarNodo(nodo)).addTo(nodos)
+      .on('click', () => elegirNodo(nodo)).addTo(nodos)
     puntos.set(nodo.id, punto)
   }
   centrar()
@@ -189,6 +229,7 @@ onMounted(() => {
   paneRuta.style.pointerEvents = 'none'
   L.control.scale({ imperial: false }).addTo(map)
   seleccion = L.layerGroup().addTo(map)
+  map.on('click', nuevoNodo)
   map.on('zoomend', ajustarNodos)
   observer = new ResizeObserver(() => map?.invalidateSize())
   observer.observe(container.value)
@@ -207,7 +248,37 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
 
 <template>
   <div class="map-viewer">
-    <div ref="container" class="leaflet-container-root" aria-label="Mapa de la red vial. Selecciona intersecciones con el ratón o usa los selectores del panel." />
+    <div v-if="modoEditor" class="editor-guide" role="status">Editar red · Haz clic en el mapa para crear un nodo o en una intersección para modificarla.
+      <Button label="Restaurar dataset" size="small" severity="secondary" @click="formularioAbierto = true; formulario.id = ''; errorEdicion = ''" />
+    </div>
+    <Dialog v-model:visible="formularioAbierto" modal :header="formulario.id ? (formulario.operacion === 'agregar' ? 'Agregar nodo' : 'Actualizar nodo') : 'Restaurar dataset'" :style="{ width: '30rem', maxWidth: '95vw' }" :closable="!guardando">
+      <form class="node-editor" @submit.prevent="guardarEdicion(formulario.id ? formulario.operacion : 'restaurar')">
+        <template v-if="formulario.id">
+          <label for="editor-id">Identificador</label>
+          <InputText id="editor-id" v-model="formulario.id" required :disabled="formulario.operacion !== 'agregar' || guardando" />
+          <label for="editor-lat">Latitud</label>
+          <input id="editor-lat" v-model.number="formulario.lat" type="number" step="any" min="-90" max="90" required :disabled="guardando">
+          <label for="editor-lon">Longitud</label>
+          <input id="editor-lon" v-model.number="formulario.lon" type="number" step="any" min="-180" max="180" required :disabled="guardando">
+          <template v-if="formulario.operacion === 'agregar'">
+            <label for="editor-conexiones">Conectar con nodos (Ctrl para seleccionar varios)</label>
+            <select id="editor-conexiones" v-model="formulario.conexiones" multiple size="5" :disabled="guardando">
+              <option v-for="nodo in grafo.mapa?.nodos" :key="nodo.id" :value="nodo.id">{{ nodo.id }}</option>
+            </select>
+            <label><input v-model="formulario.bidireccional" type="checkbox" :disabled="guardando"> Conexiones en ambos sentidos</label>
+            <p>Sin conexiones, el nodo queda aislado. Las conexiones manuales son segmentos rectos cuya longitud se calcula en metros.</p>
+          </template>
+          <p v-else>Se actualizarán los extremos y longitudes de las conexiones existentes. Eliminar retira también sus arcos.</p>
+        </template>
+        <p v-else>Restaurar reemplaza todas las ediciones por el dataset original.</p>
+        <p v-if="errorEdicion" role="alert">{{ errorEdicion }}</p>
+        <div class="editor-actions">
+          <Button type="submit" :label="formulario.id ? 'Guardar nodo' : 'Confirmar restauración'" :loading="guardando" />
+          <Button v-if="formulario.id && formulario.operacion === 'actualizar'" label="Eliminar nodo" severity="danger" :disabled="guardando" @click="guardarEdicion('eliminar')" />
+        </div>
+      </form>
+    </Dialog>
+    <div ref="container"  class="leaflet-container-root" aria-label="Mapa de la red vial. Selecciona intersecciones con el ratón o usa los selectores del panel." />
     <div v-if="grafo.estadoMapa !== 'listo'" class="map-overlay" :class="{ 'map-overlay-compact': fondo === 'osm' }" role="status">
       <i class="pi" :class="grafo.estadoMapa === 'cargando' ? 'pi-spin pi-spinner' : 'pi-map'" aria-hidden="true" />
       <h2>{{ grafo.estadoMapa === 'cargando' ? 'Cargando red vial…' : 'La ciudad, punto a punto' }}</h2>
@@ -222,6 +293,8 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
         <Button label="Mapa OSM" size="small" :severity="fondo === 'osm' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'osm'" @click="fondo = 'osm'" />
         <Button label="Solo grafo" size="small" :severity="fondo === 'local' ? 'primary' : 'secondary'" :aria-pressed="fondo === 'local'" @click="fondo = 'local'" />
         <Button icon="pi pi-expand" label="Centrar red" size="small" severity="secondary" :disabled="grafo.estadoMapa !== 'listo'" @click="centrar" />
+        <Button label="Editar red" icon="pi pi-pencil" size="small" :aria-pressed="modoEditor"
+          :severity="modoEditor ? 'primary' : 'secondary'" @click="modoEditor = !modoEditor" />
         <Button class="clear-map-button" icon="pi pi-trash" label="Limpiar pantalla"
           aria-label="Limpiar pantalla" title="Limpiar pantalla" size="small" severity="secondary"
           @click="limpiarPantalla" />
@@ -498,4 +571,9 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
   .clear-map-button .p-button-label { display: none; }
   .clear-map-button.p-button { min-width: 34px; }
 }
+.editor-guide { position: absolute; z-index: 1100; left: 50%; top: 120px; transform: translateX(-50%); max-width: 320px; padding: 12px; border-radius: 12px; background: #fff; box-shadow: 0 6px 22px #18342c24; font-size: .85rem; }
+.node-editor { display: grid; gap: 10px; }
+.node-editor input, .node-editor select { padding: 8px; }
+.node-editor p { font-size: .85rem; line-height: 1.5; }
+.editor-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>

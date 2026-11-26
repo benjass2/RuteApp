@@ -74,5 +74,10 @@ export const useGrafoStore = defineStore('grafo', () => {
     }
   }
 
-  return { estado, resumen, mensajeError, cargar, cancelar, mapa, estadoMapa, errorMapa, cargarRed }
+  async function editarRed(cambio: import('../../domain/models/edicion').CambioRed) {
+    await repository.editarRed(cambio)
+    await cargar()
+  }
+
+  return { editarRed, estado, resumen, mensajeError, cargar, cancelar, mapa, estadoMapa, errorMapa, cargarRed }
 })

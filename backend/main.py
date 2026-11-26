@@ -12,6 +12,8 @@ from backend.app.application.services.calcular_ruta import CalcularRuta
 from backend.app.infrastructure.persistence.json_graph_repository import JsonGrafoRepository
 from backend.app.application.dtos.grafo import RespuestaEstado
 
+from backend.app.api.v1.endpoints.editor import router as editor_router, inicializar_editor
+
 DEFAULT_DATASET = Path(__file__).resolve().parent / "dataset" / "dataset_grafo.json"
 
 
@@ -25,12 +27,16 @@ def create_app(dataset_path: Path | None = None, *, inicializar: bool = False) -
         path = dataset_path or Path(os.environ.get("RUTEA_DATASET_PATH", str(DEFAULT_DATASET)))
         app.state.repository = None
         app.state.rutas = None
+        inicializar_editor(app, path)
+        app.state.snapshot = (None, None)
         try:
-            repository = JsonGrafoRepository(path)
+            activo = app.state.editor_path if app.state.editor_path.exists() else path
+            repository = JsonGrafoRepository(activo)
             rutas = CalcularRuta(repository)
             # Publicar ambos servicios solo tras completar toda la inicialización.
             app.state.repository = repository
             app.state.rutas = rutas
+            app.state.snapshot = (repository, rutas)
         except (OSError, ValueError, KeyError, TypeError):
             logging.getLogger(__name__).exception("No se pudo cargar el dataset: %s", path)
         inicializado = True
@@ -43,6 +49,7 @@ def create_app(dataset_path: Path | None = None, *, inicializar: bool = False) -
     app = FastAPI(title="RUTEA API", version="0.1.0", lifespan=lifespan)
     app.state.repository = None
     app.state.rutas = None
+    app.include_router(editor_router)
     app.include_router(router)
     app.include_router(routes_router)
 
