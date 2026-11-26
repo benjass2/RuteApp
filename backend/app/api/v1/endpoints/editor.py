@@ -23,6 +23,7 @@ class CambioRed(BaseModel):
     lon: float = Field(default=0, ge=-180, le=180)
     conexiones: list[str] = Field(default_factory=list, max_length=20)
     bidireccional: bool = True
+    quitar_conexiones: list[str] = Field(default_factory=list, max_length=100)
 
 
 def distancia(a, b):
@@ -46,23 +47,6 @@ def modificar(data, cambio):
         if id in nodos:
             raise ValueError("Ese identificador ya existe.")
         nodos[id] = {"id": id, "lat": cambio.lat, "lon": cambio.lon}
-        if len(set(cambio.conexiones)) != len(cambio.conexiones):
-            raise ValueError("Hay conexiones repetidas.")
-        for vecino in cambio.conexiones:
-            if vecino == id or vecino not in nodos:
-                raise ValueError("Selecciona conexiones existentes distintas del nodo nuevo.")
-            a, b = nodos[id], nodos[vecino]
-            coords = [[a["lon"], a["lat"]], [b["lon"], b["lat"]]]
-            longitud = distancia(*coords)
-            if longitud <= 0:
-                raise ValueError("Los extremos de una conexión deben ser distintos.")
-            arista = {"origen": id, "destino": vecino, "longitud_m": longitud,
-                      "nombre": "Conexión manual", "sentido_unico": not cambio.bidireccional,
-                      "geometria": coords}
-            data["aristas"].append(arista)
-            if cambio.bidireccional:
-                data["aristas"].append({**arista, "origen": vecino, "destino": id,
-                                        "geometria": list(reversed(coords))})
     elif id not in nodos:
         raise ValueError("El nodo no existe.")
     elif cambio.operacion == "eliminar":
@@ -70,7 +54,7 @@ def modificar(data, cambio):
             raise ValueError("Debe conservarse al menos un nodo en el dataset.")
         del nodos[id]
         data["aristas"] = [a for a in data["aristas"] if id not in (a["origen"], a["destino"])]
-    else:
+    elif (nodos[id]["lat"], nodos[id]["lon"]) != (cambio.lat, cambio.lon):
         nodos[id] = {"id": id, "lat": cambio.lat, "lon": cambio.lon}
         for arco in data["aristas"]:
             if id not in (arco["origen"], arco["destino"]):
@@ -85,6 +69,40 @@ def modificar(data, cambio):
             if longitud <= 0:
                 raise ValueError("El cambio produce un arco de longitud cero.")
             arco["geometria"], arco["longitud_m"] = coords, longitud
+    if cambio.operacion in ("agregar", "actualizar"):
+        if len(set(cambio.quitar_conexiones)) != len(cambio.quitar_conexiones):
+            raise ValueError("Hay conexiones a quitar repetidas.")
+        vecinos = {a["destino"] if a["origen"] == id else a["origen"]
+                   for a in data["aristas"] if id in (a["origen"], a["destino"])}
+        if any(v not in vecinos for v in cambio.quitar_conexiones):
+            raise ValueError("Una conexión a quitar ya no existe.")
+        if set(cambio.conexiones) & set(cambio.quitar_conexiones):
+            raise ValueError("No agregues y quites la misma conexión en un cambio.")
+        quitar = set(cambio.quitar_conexiones)
+        data["aristas"] = [a for a in data["aristas"] if not (
+            a["origen"] == id and a["destino"] in quitar or
+            a["destino"] == id and a["origen"] in quitar)]
+        if len(set(cambio.conexiones)) != len(cambio.conexiones):
+            raise ValueError("Hay conexiones repetidas.")
+        for vecino in cambio.conexiones:
+            if vecino == id or vecino not in nodos:
+                raise ValueError("Selecciona conexiones existentes distintas del nodo nuevo.")
+            if any(a["origen"] == id and a["destino"] == vecino for a in data["aristas"]):
+                raise ValueError("Ya existe una conexión saliente con ese nodo.")
+            if cambio.bidireccional and any(a["origen"] == vecino and a["destino"] == id for a in data["aristas"]):
+                raise ValueError("Ya existe una conexión entrante. Agrega solo el sentido faltante.")
+            a, b = nodos[id], nodos[vecino]
+            coords = [[a["lon"], a["lat"]], [b["lon"], b["lat"]]]
+            longitud = distancia(*coords)
+            if longitud <= 0:
+                raise ValueError("Los extremos de una conexión deben ser distintos.")
+            arista = {"origen": id, "destino": vecino, "longitud_m": longitud,
+                      "nombre": "Conexión manual", "sentido_unico": not cambio.bidireccional,
+                      "geometria": coords}
+            data["aristas"].append(arista)
+            if cambio.bidireccional:
+                data["aristas"].append({**arista, "origen": vecino, "destino": id,
+                                        "geometria": list(reversed(coords))})
     return data
 
 

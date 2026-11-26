@@ -51,3 +51,37 @@ class EditorTests(unittest.TestCase):
                 self.assertEqual(edit(c, "restaurar").status_code, 200)
                 self.assertEqual(c.get("/api/grafo/resumen").json()["nodos"], 2)
             self.assertEqual(json.loads(original.read_text(encoding="utf-8")), data)
+
+    def test_update_connections_preserves_unmodified_arcs(self):
+        with TemporaryDirectory() as directory:
+            original = Path(directory) / "graph.json"
+            data = {"nodos": {
+                "a": {"lat": -12.1, "lon": -77},
+                "b": {"lat": -12.11, "lon": -77},
+                "c": {"lat": -12.12, "lon": -77}},
+                "aristas": [{"origen": "a", "destino": "b", "longitud_m": 100,
+                             "nombre": "Calle original", "sentido_unico": True}]}
+            original.write_text(json.dumps(data), encoding="utf-8")
+            app = create_app(original)
+            with TestClient(app) as client:
+                base = {"operacion": "actualizar", "id": "a", "lat": -12.1, "lon": -77}
+                self.assertEqual(client.post("/api/grafo/editor", json=base).status_code, 200)
+                saved = json.loads(app.state.editor_path.read_text(encoding="utf-8"))
+                self.assertEqual(saved["aristas"], data["aristas"])
+                self.assertEqual(client.post("/api/grafo/editor", json={
+                    **base, "conexiones": ["c"], "bidireccional": False}).status_code, 200)
+                for algoritmo in ("dijkstra", "bellman_ford"):
+                    self.assertEqual(client.post("/api/rutas/punto-a-punto", json={
+                        "origen": "a", "destino": "c", "algoritmo": algoritmo}).status_code, 200)
+                    self.assertEqual(client.post("/api/rutas/punto-a-punto", json={
+                        "origen": "c", "destino": "a", "algoritmo": algoritmo}).status_code, 404)
+                before = app.state.editor_path.read_bytes()
+                self.assertEqual(client.post("/api/grafo/editor", json={
+                    **base, "conexiones": ["c"]}).status_code, 422)
+                self.assertEqual(before, app.state.editor_path.read_bytes())
+                self.assertEqual(client.post("/api/grafo/editor", json={
+                    **base, "quitar_conexiones": ["c"]}).status_code, 200)
+                self.assertEqual(client.post("/api/rutas/punto-a-punto", json={
+                    "origen": "a", "destino": "c"}).status_code, 404)
+                saved = json.loads(app.state.editor_path.read_text(encoding="utf-8"))
+                self.assertEqual(saved["aristas"], data["aristas"])

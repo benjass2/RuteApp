@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as L from 'leaflet'
+import MultiSelect from 'primevue/multiselect'
+import { computed } from 'vue'
 import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
 import { reactive } from 'vue'
@@ -108,25 +110,52 @@ const modoEditor = ref(false)
 const formularioAbierto = ref(false)
 const guardando = ref(false)
 const errorEdicion = ref('')
+const avisoEdicion = ref('')
+const confirmacion = ref<'eliminar' | 'restaurar' | null>(null)
 const formulario = reactive({
   operacion: 'agregar' as 'agregar' | 'actualizar',
-  id: '', lat: 0, lon: 0, conexiones: [] as string[], bidireccional: true,
+  id: '', lat: 0, lon: 0, conexiones: [] as string[], quitar_conexiones: [] as string[], bidireccional: true,
 })
 function nuevoNodo(evento: L.LeafletMouseEvent) {
   if (!modoEditor.value || grafo.estadoMapa !== 'listo') return
   Object.assign(formulario, {
     operacion: 'agregar', id: 'manual-' + Date.now(), lat: evento.latlng.lat,
-    lon: evento.latlng.lng, conexiones: [], bidireccional: true,
+    lon: evento.latlng.lng, conexiones: [], quitar_conexiones: [], bidireccional: true,
   })
   errorEdicion.value = ''
+  confirmacion.value = null
   formularioAbierto.value = true
 }
 function elegirNodo(nodo: { id: string; lat: number; lon: number }) {
   if (!modoEditor.value) { plan.seleccionarNodo(nodo); return }
-  Object.assign(formulario, { operacion: 'actualizar', ...nodo, conexiones: [] })
+  Object.assign(formulario, { operacion: 'actualizar', ...nodo, conexiones: [], quitar_conexiones: [], bidireccional: true })
   errorEdicion.value = ''
+  confirmacion.value = null
   formularioAbierto.value = true
 }
+const conexionesActuales = computed(() => {
+  const relaciones = new Map<string, { id: string; entrada: boolean; salida: boolean }>()
+  for (const feature of grafo.mapa?.red.features ?? []) {
+    const { origen, destino } = feature.properties
+    if (origen !== formulario.id && destino !== formulario.id) continue
+    const id = origen === formulario.id ? destino : origen
+    const item = relaciones.get(id) ?? { id, entrada: false, salida: false }
+    item.entrada ||= destino === formulario.id
+    item.salida ||= origen === formulario.id
+    relaciones.set(id, item)
+  }
+  return [...relaciones.values()].map(item => ({
+    ...item, label: item.id + (item.entrada && item.salida ? ' · ambos sentidos' : item.salida ? ' · salida' : ' · entrada'),
+  }))
+})
+const nodosConectables = computed(() => (grafo.mapa?.nodos ?? []).filter(nodo => nodo.id !== formulario.id))
+function solicitarRestauracion() {
+  formulario.id = ''
+  errorEdicion.value = ''
+  confirmacion.value = 'restaurar'
+  formularioAbierto.value = true
+}
+
 async function guardarEdicion(operacion: 'agregar' | 'actualizar' | 'eliminar' | 'restaurar') {
   if (guardando.value) return
   guardando.value = true
@@ -135,6 +164,12 @@ async function guardarEdicion(operacion: 'agregar' | 'actualizar' | 'eliminar' |
     await grafo.editarRed({ ...formulario, conexiones: [...formulario.conexiones], operacion })
     rutas.limpiar()
     analisis.limpiar()
+    if (grafo.estado !== 'listo' || grafo.estadoMapa !== 'listo') {
+      avisoEdicion.value = 'Cambios guardados. Falló la recarga del mapa; reintenta desde Red vial.'
+    } else {
+      avisoEdicion.value = operacion === 'restaurar' ? 'Dataset original restaurado.' : operacion === 'eliminar' ? 'Nodo y conexiones eliminados.' : 'Cambios guardados. El mapa y los algoritmos usan la red actualizada.'
+    }
+    confirmacion.value = null
     formularioAbierto.value = false
   } catch (error) {
     errorEdicion.value = error instanceof Error ? error.message : 'No se pudo guardar.'
@@ -248,33 +283,44 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
 
 <template>
   <div class="map-viewer">
-    <div v-if="modoEditor" class="editor-guide" role="status">Editar red · Haz clic en el mapa para crear un nodo o en una intersección para modificarla.
-      <Button label="Restaurar dataset" size="small" severity="secondary" @click="formularioAbierto = true; formulario.id = ''; errorEdicion = ''" />
+    <div v-if="avisoEdicion" class="editor-notice" role="status">{{ avisoEdicion }}
+      <Button aria-label="Cerrar aviso" icon="pi pi-times" text size="small" @click="avisoEdicion = ''" />
     </div>
-    <Dialog v-model:visible="formularioAbierto" modal :header="formulario.id ? (formulario.operacion === 'agregar' ? 'Agregar nodo' : 'Actualizar nodo') : 'Restaurar dataset'" :style="{ width: '30rem', maxWidth: '95vw' }" :closable="!guardando">
-      <form class="node-editor" @submit.prevent="guardarEdicion(formulario.id ? formulario.operacion : 'restaurar')">
-        <template v-if="formulario.id">
+    <div v-if="modoEditor" class="editor-guide" role="status">Editar red · Haz clic en el mapa para crear un nodo o en una intersección para modificarla.
+      <Button label="Restaurar dataset" size="small" severity="secondary" @click="solicitarRestauracion" />
+    </div>
+    <Dialog v-model:visible="formularioAbierto" modal :header="confirmacion === 'restaurar' ? 'Restaurar dataset' : confirmacion === 'eliminar' ? 'Eliminar nodo' : formulario.operacion === 'agregar' ? 'Agregar nodo' : 'Actualizar nodo'" :style="{ width: '30rem', maxWidth: '95vw' }" :closable="!guardando">
+      <form class="node-editor" @submit.prevent="guardarEdicion(confirmacion ?? formulario.operacion)">
+        <template v-if="!confirmacion">
           <label for="editor-id">Identificador</label>
           <InputText id="editor-id" v-model="formulario.id" required :disabled="formulario.operacion !== 'agregar' || guardando" />
           <label for="editor-lat">Latitud</label>
           <input id="editor-lat" v-model.number="formulario.lat" type="number" step="any" min="-90" max="90" required :disabled="guardando">
           <label for="editor-lon">Longitud</label>
           <input id="editor-lon" v-model.number="formulario.lon" type="number" step="any" min="-180" max="180" required :disabled="guardando">
-          <template v-if="formulario.operacion === 'agregar'">
-            <label for="editor-conexiones">Conectar con nodos (Ctrl para seleccionar varios)</label>
-            <select id="editor-conexiones" v-model="formulario.conexiones" multiple size="5" :disabled="guardando">
-              <option v-for="nodo in grafo.mapa?.nodos" :key="nodo.id" :value="nodo.id">{{ nodo.id }}</option>
-            </select>
-            <label><input v-model="formulario.bidireccional" type="checkbox" :disabled="guardando"> Conexiones en ambos sentidos</label>
-            <p>Sin conexiones, el nodo queda aislado. Las conexiones manuales son segmentos rectos cuya longitud se calcula en metros.</p>
+          <template v-if="formulario.operacion === 'actualizar'">
+            <label for="editor-quitar">Quitar conexiones existentes</label>
+            <MultiSelect input-id="editor-quitar" v-model="formulario.quitar_conexiones"
+              :options="conexionesActuales" option-label="label" option-value="id" filter
+              placeholder="Conexiones que deseas quitar" :disabled="guardando" display="chip" />
+            <p>Quitar una conexión elimina todos sus arcos en ambos sentidos, incluidos los paralelos. Las demás conexiones se conservan.</p>
           </template>
-          <p v-else>Se actualizarán los extremos y longitudes de las conexiones existentes. Eliminar retira también sus arcos.</p>
+          <label for="editor-conexiones">Agregar conexiones (buscar por ID)</label>
+          <MultiSelect input-id="editor-conexiones" v-model="formulario.conexiones"
+            :options="nodosConectables" option-label="id" option-value="id" filter
+            :virtual-scroller-options="{ itemSize: 38 }" placeholder="Busca y selecciona nodos"
+            :selection-limit="20" :disabled="guardando" display="chip" />
+          <label><input v-model="formulario.bidireccional" type="checkbox" :disabled="guardando"> Nuevas conexiones en ambos sentidos</label>
+          <p>Desactivado crea solo una salida desde este nodo. Los enlaces nuevos son segmentos rectos. Un nodo sin conexiones queda aislado.</p>
         </template>
-        <p v-else>Restaurar reemplaza todas las ediciones por el dataset original.</p>
+        <p v-else-if="confirmacion === 'eliminar'">¿Eliminar el nodo {{ formulario.id }} y todos sus arcos de entrada y salida?</p>
+        <p v-else>¿Restaurar el dataset original? Se reemplazarán todas las ediciones guardadas.</p>
         <p v-if="errorEdicion" role="alert">{{ errorEdicion }}</p>
         <div class="editor-actions">
-          <Button type="submit" :label="formulario.id ? 'Guardar nodo' : 'Confirmar restauración'" :loading="guardando" />
-          <Button v-if="formulario.id && formulario.operacion === 'actualizar'" label="Eliminar nodo" severity="danger" :disabled="guardando" @click="guardarEdicion('eliminar')" />
+          <Button type="submit" :label="confirmacion === 'eliminar' ? 'Confirmar eliminación' : confirmacion === 'restaurar' ? 'Confirmar restauración' : 'Guardar nodo'" :severity="confirmacion === 'eliminar' ? 'danger' : 'primary'" :loading="guardando" />
+          <Button v-if="formulario.id && formulario.operacion === 'actualizar' && !confirmacion" label="Eliminar nodo" severity="danger" :disabled="guardando" @click="confirmacion = 'eliminar'; errorEdicion = ''" />
+          <Button v-if="confirmacion" label="Cancelar" severity="secondary" :disabled="guardando"
+            @click="confirmacion === 'restaurar' ? formularioAbierto = false : confirmacion = null" />
         </div>
       </form>
     </Dialog>
@@ -576,4 +622,6 @@ onBeforeUnmount(() => { observer?.disconnect(); base?.off(); map?.remove(); map 
 .node-editor input, .node-editor select { padding: 8px; }
 .node-editor p { font-size: .85rem; line-height: 1.5; }
 .editor-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.editor-notice { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%); z-index: 1200; max-width: min(420px, 90vw); padding: 10px 14px; background: #ecfdf5; color: #064e3b; border: 1px solid #087452; border-radius: 12px; font-size: .875rem; }
+.node-editor .p-multiselect { width: 100%; min-width: 0; }
 </style>

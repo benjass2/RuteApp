@@ -4,5 +4,6 @@ export interface CambioRed {
   lat: number
   lon: number
   conexiones: string[]
+  quitar_conexiones?: string[]
   bidireccional: boolean
 }

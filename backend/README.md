@@ -270,3 +270,32 @@ Un archivo inválido queda registrado en el log y mantiene los endpoints del
 grafo en 503. Los servicios se publican únicamente si la carga y la creación
 de índices terminaron correctamente; health conserva su respuesta 200 con
 `dataset_disponible: false` cuando el dataset no está listo.
+
+## Edición local del grafo
+
+El modo «Editar red» permite crear nodos haciendo clic en el mapa y modificar
+nodos existentes. Las conexiones nuevas pueden ser salientes o bidireccionales.
+Al quitar una conexión se retiran todos los arcos entre los dos nodos, incluidos
+los de retorno y los paralelos. Las demás conexiones conservan sus geometrías y
+longitudes, salvo que cambien las coordenadas del nodo.
+
+La API POST /api/grafo/editor guarda una copia *_editable.json junto al original.
+Cada cambio válido reconstruye adyacencia y UFDS y publica el grafo actualizado.
+El archivo se recupera al reiniciar FastAPI. La persistencia utiliza un proceso
+local de servidor. Vercel requiere almacenamiento persistente adicional.
+
+### Demostración de edición y recálculo
+
+1. Activar «Editar red» y crear un nodo con una conexión bidireccional.
+2. Desactivar la edición y seleccionar ese nodo como entrega. Comparar Dijkstra
+   y Bellman-Ford y comprobar costos equivalentes.
+3. Editar las coordenadas, guardar y volver a seleccionar los puntos para
+   recalcular. Comprobar el cambio de distancia.
+4. Quitar la conexión, guardar y comprobar que el nodo aislado no admite ruta.
+5. Agregar una conexión desde el nodo existente y comprobar nuevamente la ruta.
+6. Reiniciar FastAPI y comprobar que el nodo y sus conexiones persisten.
+7. Eliminar el nodo y confirmar. Comprobar que desaparece del mapa.
+8. Restaurar el dataset, confirmar y comprobar los conteos originales.
+
+Las conexiones manuales son segmentos geográficos rectos con longitudes
+calculadas mediante Haversine. Son enlaces de prueba definidos por el usuario.
